@@ -3290,7 +3290,7 @@ void ripser<sparse_distance_matrix>::compute_barcodes(){
                 dim, dim_forgpuscan);
         sw.stop();
 #ifdef PROFILING
-        std::cerr << "MATRIX REDUCTION TIME for dim " << dim << ": " << sw.ms() / 1000.0 << "\n" << std::endl;
+        std::cerr << "SUBMATRIX REDUCTION TIME for dim " << dim << ": " << sw.ms() / 1000.0 << "\n" << std::endl;
 #endif
         if (dim < dim_max) {
             sw.start();
@@ -3613,6 +3613,9 @@ int main(int argc, char** argv) {
         }
     }
     sw.stop();
+#ifdef INDICATE_PROGRESS
+    std::cerr<<clear_line<<std::flush;
+#endif
 #ifdef PROFILING
     std::cerr<<"total time: "<<sw.ms()/1000.0<<"s"<<std::endl;
     cudaGetDeviceProperties(&deviceProp, 0);

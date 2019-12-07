@@ -57,7 +57,6 @@ cuda_add_executable(ripser++ ripser++.cu)
 #target_compile_definitions(ripser++ PUBLIC INDICATE_PROGRESS)
 #target_compile_definitions(ripser++ PUBLIC CPUONLY_SPARSE_HASHMAP)#GCC version MUST be <=7.3 (tested on version 7.3)
 #target_compile_definitions(ripser++ PUBLIC CPUONLY_ASSEMBLE_REDUCTION_MATRIX)
-#target_compile_definitions(ripser++ PUBLIC WARP_FILTERING)
 
 
 target_link_libraries(ripser++ phmap)
