@@ -1,5 +1,8 @@
 #!/bin/bash
 
+#make the bin folder
+mkdir -p python/bin
+
 # Change current directory to bin/ under python/
 cd python/bin
 
