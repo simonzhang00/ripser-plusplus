@@ -13,6 +13,9 @@ cd build
 
 cmake ..
 
-make
+make -j$(nproc)
 
-mv ../run.sh run.sh
+cp ../run.sh run.sh
+
+echo -e ${GREEN}You are currently under the directory:${NC}
+echo -e ${BLUE}$PWD${NC}

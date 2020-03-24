@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.2)
-project(ripser++)
+project(pyripser++)
 
 find_package(CUDA 7 REQUIRED)
 
@@ -8,7 +8,7 @@ set(CMAKE_BUILD_TYPE "Release")
 
 INCLUDE(CheckCXXSourceCompiles)
 
-include_directories(include)
+include_directories(../include)
 
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 
@@ -17,8 +17,8 @@ if (CMAKE_BUILD_TYPE STREQUAL "Debug")
     #set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS};-gencode;arch=compute_35,code=sm_35;-gencode;arch=compute_37,code=sm_37;-gencode;arch=compute_50,code=sm_50;-gencode;arch=compute_52,code=sm_52;-gencode;arch=compute_52,code=compute_52;-g;-G;-Xcompiler;-ggdb;-std=c++11)#manually specify
     set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS};-g;-G;-Xcompiler;-ggdb;-std=c++11)
 else()
-    #set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS};-gencode;arch=compute_35,code=sm_35;-gencode;arch=compute_37,code=sm_37;-gencode;arch=compute_50,code=sm_50;-gencode;arch=compute_52,code=sm_52;-gencode;arch=compute_52,code=compute_52;-gencode;arch=compute_70,code=compute_70;-O3;-Xcompiler;-fopenmp;-Xcompiler;-Ofast;-w;-DNDEBUG;-std=c++11)
-    set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS};-O3;-Xcompiler;-fopenmp;-Xcompiler;-Ofast;-w;-DNDEBUG;-std=c++11)
+    #set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS};-gencode;arch=compute_35,code=sm_35;-gencode;arch=compute_37,code=sm_37;-gencode;arch=compute_50,code=sm_50;-gencode;arch=compute_52,code=sm_52;-gencode;arch=compute_52,code=compute_52;-gencode;arch=compute_70,code=compute_70;-O3;-Xcompiler;-fopenmp;-Xcompiler;-Ofast;-w;-DNDEBUG;-std=c++11)#-std=c++11;
+    set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS}; -O3;-Xcompiler;-fopenmp;-Xcompiler;-Ofast;-w;-DNDEBUG;-std=c++11)
 endif()
 
 include(FindCUDA)
@@ -29,6 +29,7 @@ Set to Auto for automatic detection (default)."
         )
 cuda_select_nvcc_arch_flags(CUDA_ARCH_FLAGS ${CUDA_ARCH_LIST})
 list(APPEND CUDA_NVCC_FLAGS ${CUDA_ARCH_FLAGS})
+
 
 
 FIND_PACKAGE(OpenMP)
@@ -60,13 +61,22 @@ To use a different compiler, pass it to cmake in the variable CMAKE_CXX_COMPILER
 endif()
 set(CMAKE_CXX_STANDARD 11)
 
-add_library(phmap STATIC include/phmap_interface/phmap_interface.cpp)
+add_library(phmap SHARED ../include/phmap_interface/phmap_interface.cpp)
 
-add_executable(ripser ripser.cpp)
-cuda_add_executable(ripser++ ripser++.cu)
+add_executable(ripser ../ripser.cpp)
+
+cuda_add_library(pyripser++ SHARED ../ripser++.cu)
+#target_compile_definitions(pyripser++ PUBLIC ASSEMBLE_REDUCTION_SUBMATRIX)
+#target_compile_definitions(pyripser++ PUBLIC INDICATE_PROGRESS)
+#target_compile_definitions(pyripser++ PUBLIC CPUONLY_SPARSE_HASHMAP)#GCC version MUST be <=7.3 (tested on version 7.3)
+#target_compile_definitions(pyripser++ PUBLIC CPUONLY_ASSEMBLE_REDUCTION_MATRIX)
+
+target_link_libraries(pyripser++ phmap)
+
+cuda_add_executable(ripser++ ../ripser++.cu)
 #target_compile_definitions(ripser++ PUBLIC ASSEMBLE_REDUCTION_SUBMATRIX)
 #target_compile_definitions(ripser++ PUBLIC INDICATE_PROGRESS)
-#target_compile_definitions(ripser++ PUBLIC CPUONLY_SPARSE_HASHMAP)#GCC version MUST be <=7.3 (tested on version 7.3), Google sparse hashmap no longer supported
+#target_compile_definitions(ripser++ PUBLIC CPUONLY_SPARSE_HASHMAP)#GCC version MUST be <=7.3 (tested on version 7.3)
 #target_compile_definitions(ripser++ PUBLIC CPUONLY_ASSEMBLE_REDUCTION_MATRIX)
 
 

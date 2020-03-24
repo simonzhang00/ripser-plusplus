@@ -3,7 +3,9 @@
 
  MIT License
 
- Copyright (c) 2019 Simon Zhang, Mengbai Xiao, Hao Wang
+ Copyright (c) 2019, 2020 Simon Zhang, Mengbai Xiao, Hao Wang
+
+ Python Bindings: Birkan Gokbag
 
  Ripser codebase, written by Ulrich Bauer.
 
@@ -3102,10 +3104,10 @@ void ripser<compressed_lower_distance_matrix>::compute_barcodes() {
 #endif
     if(dim_max>gpu_dim_max){//do cpu only computation from this point on
 #ifdef CPUONLY_SPARSE_HASHMAP
-        std::cerr<<"MEMORY EFFICIENT/BUT TIME INEFFICIENT CPU-ONLY MODE FOR REMAINDER OF HIGH DIMENSIONAL COMPUTATION"<<std::endl;
+        std::cerr<<"MEMORY EFFICIENT/BUT TIME INEFFICIENT CPU-ONLY MODE FOR REMAINDER OF HIGH DIMENSIONAL COMPUTATION (NOT ENOUGH GPU DEVICE MEMORY)"<<std::endl;
 #endif
 #ifndef CPUONLY_SPARSE_HASHMAP
-        std::cerr<<"CPU-ONLY MODE FOR REMAINDER OF HIGH DIMENSIONAL COMPUTATION"<<std::endl;
+        std::cerr<<"CPU-ONLY MODE FOR REMAINDER OF HIGH DIMENSIONAL COMPUTATION (NOT ENOUGH GPU DEVICE MEMORY)"<<std::endl;
 #endif
         free_init_cpumem();
         hash_map<index_t,index_t> cpu_pivot_column_index;
@@ -3381,6 +3383,13 @@ sparse_distance_matrix read_sparse_distance_matrix(std::istream& input_stream) {
     return sparse_distance_matrix(std::move(neighbors), num_edges);
 }
 
+compressed_lower_distance_matrix read_lower_distance_matrix_python(value_t* matrix, int matrix_length) {
+
+    std::vector<value_t> distances(matrix, matrix + matrix_length);
+
+    return compressed_lower_distance_matrix(std::move(distances));
+}
+
 compressed_lower_distance_matrix read_lower_distance_matrix(std::istream& input_stream) {
     std::vector<value_t> distances;
     value_t value;
@@ -3388,6 +3397,13 @@ compressed_lower_distance_matrix read_lower_distance_matrix(std::istream& input_
         distances.push_back(value);
         input_stream.ignore();
     }
+
+    return compressed_lower_distance_matrix(std::move(distances));
+}
+
+compressed_lower_distance_matrix read_distance_matrix_python(value_t* matrix, int matrix_length) {
+
+    std::vector<value_t> distances(matrix, matrix + matrix_length);
 
     return compressed_lower_distance_matrix(std::move(distances));
 }
@@ -3439,6 +3455,16 @@ compressed_lower_distance_matrix read_binary(std::istream& input_stream) {
     return compressed_lower_distance_matrix(std::move(distances));
 }
 
+compressed_lower_distance_matrix read_matrix_python(value_t* matrix, int matrix_length, file_format format) {
+    switch (format) {
+        case LOWER_DISTANCE_MATRIX:
+            return read_lower_distance_matrix_python(matrix, matrix_length);
+        case DISTANCE_MATRIX:
+            return read_distance_matrix_python(matrix, matrix_length);
+    }
+    std::cerr<<"unsupported input file format"<<std::endl;
+}
+
 compressed_lower_distance_matrix read_file(std::istream& input_stream, file_format format) {
     switch (format) {
         case LOWER_DISTANCE_MATRIX:
@@ -3478,9 +3504,286 @@ void print_usage_and_exit(int exit_code) {
             << "  --dim <k>        compute persistent homology up to dimension <k>" << std::endl
             << "  --threshold <t>  compute Rips complexes up to diameter <t>" << std::endl
             << "  --sparse         force sparse computation "<<std::endl
+            << "  --ratio <r>      only show persistence pairs with death/birth ratio > r" << std::endl
             << std::endl;
 
     exit(exit_code);
+}
+
+
+extern "C" void run_main_filename(int argc,  char** argv, const char* filename) {
+
+    Stopwatch sw;
+#ifdef PROFILING
+    cudaDeviceProp deviceProp;
+    size_t freeMem_start, freeMem_end, totalMemory;
+    cudaGetDeviceProperties(&deviceProp, 0);
+    cudaMemGetInfo(&freeMem_start,&totalMemory);
+#endif
+    sw.start();
+
+    file_format format= DISTANCE_MATRIX;
+
+    index_t dim_max= 1;
+    value_t threshold= std::numeric_limits<value_t>::max();
+
+    float ratio= 1;
+
+    bool use_sparse= false;
+
+    for (index_t i= 0; i < argc; i++) {
+        const std::string arg(argv[i]);
+        if (arg == "--help") {
+            print_usage_and_exit(0);
+        } else if (arg == "--dim") {
+            std::string parameter= std::string(argv[++i]);
+            size_t next_pos;
+            dim_max= std::stol(parameter, &next_pos);
+            if (next_pos != parameter.size()) print_usage_and_exit(-1);
+        } else if (arg == "--threshold") {
+            std::string parameter= std::string(argv[++i]);
+            size_t next_pos;
+            threshold= std::stof(parameter, &next_pos);
+            if (next_pos != parameter.size()) print_usage_and_exit(-1);
+        } else if (arg == "--ratio") {
+            std::string parameter= std::string(argv[++i]);
+            size_t next_pos;
+            ratio= std::stof(parameter, &next_pos);
+            if (next_pos != parameter.size()) print_usage_and_exit(-1);
+        } else if (arg == "--format") {
+            std::string parameter= std::string(argv[++i]);
+            if (parameter == "lower-distance")
+                format= LOWER_DISTANCE_MATRIX;
+            else if (parameter == "distance")
+                format= DISTANCE_MATRIX;
+            else if (parameter == "point-cloud")
+                format= POINT_CLOUD;
+            else if (parameter == "dipha")
+                format= DIPHA;
+            else if (parameter == "sparse")
+                format= SPARSE;
+            else if (parameter == "binary")
+                format= BINARY;
+            else
+                print_usage_and_exit(-1);
+        } else if(arg=="--sparse") {
+            use_sparse= true;
+        }
+    }
+
+    std::ifstream file_stream(filename);
+    if (filename && file_stream.fail()) {
+        std::cerr << "couldn't open file " << filename << std::endl;
+        exit(-1);
+    }
+    if (format == SPARSE) {
+        Stopwatch IOsw;
+        IOsw.start();
+        sparse_distance_matrix dist =
+                read_sparse_distance_matrix(filename ? file_stream : std::cin);
+        IOsw.stop();
+#ifdef PROFILING
+        std::cerr<<IOsw.ms()/1000.0<<"s time to load sparse distance matrix (I/O)"<<std::endl;
+#endif
+        assert(dist.num_entries%2==0);
+        std::cout << "sparse distance matrix with " << dist.size() << " points and "
+                  << dist.num_entries/2 << "/" << (dist.size() * (dist.size() - 1)) / 2 << " entries"
+                  << std::endl;
+
+        ripser<sparse_distance_matrix>(std::move(dist), dim_max, threshold, ratio)
+                .compute_barcodes();
+    }else {
+
+        Stopwatch IOsw;
+        IOsw.start();
+        compressed_lower_distance_matrix dist= read_file(filename ? file_stream : std::cin, format);
+        IOsw.stop();
+#ifdef PROFILING
+        std::cerr<<IOsw.ms()/1000.0<<"s time to load distance matrix (I/O)"<<std::endl;
+#endif
+        value_t min= std::numeric_limits<value_t>::infinity(),
+                max= -std::numeric_limits<value_t>::infinity(), max_finite= max;
+        int num_edges= 0;
+
+        value_t enclosing_radius= std::numeric_limits<value_t>::infinity();
+        for (index_t i= 0; i < dist.size(); ++i) {
+            value_t r_i= -std::numeric_limits<value_t>::infinity();
+            for (index_t j= 0; j < dist.size(); ++j) r_i= std::max(r_i, dist(i, j));
+            enclosing_radius= std::min(enclosing_radius, r_i);
+        }
+
+        if (threshold == std::numeric_limits<value_t>::max()) threshold= enclosing_radius;
+
+        for (auto d : dist.distances) {
+            min= std::min(min, d);
+            max= std::max(max, d);
+            max_finite= d != std::numeric_limits<value_t>::infinity() ? std::max(max, d) : max_finite;
+            if (d <= threshold) ++num_edges;
+        }
+
+        std::cout << "value range: [" << min << "," << max_finite << "]" << std::endl;
+
+        if (use_sparse) {
+
+            std::cout << "sparse distance matrix with " << dist.size() << " points and "
+                      << num_edges << "/" << (dist.size() * (dist.size() - 1)) / 2 << " entries"
+                      << std::endl;
+            ripser<sparse_distance_matrix>(sparse_distance_matrix(std::move(dist), threshold),
+                                           dim_max, threshold, ratio)
+                    .compute_barcodes();
+        } else {
+            std::cout << "distance matrix with " << dist.size() << " points" << std::endl;
+            ripser<compressed_lower_distance_matrix>(std::move(dist), dim_max, threshold, ratio).compute_barcodes();
+        }
+    }
+    sw.stop();
+#ifdef INDICATE_PROGRESS
+    std::cerr<<clear_line<<std::flush;
+#endif
+#ifdef PROFILING
+    std::cerr<<"total time: "<<sw.ms()/1000.0<<"s"<<std::endl;
+    cudaGetDeviceProperties(&deviceProp, 0);
+    cudaMemGetInfo(&freeMem_end,&totalMemory);
+
+    std::cerr<<"total GPU memory used: "<<(freeMem_start-freeMem_end)/1000.0/1000.0/1000.0<<"GB"<<std::endl;
+#endif
+}
+
+extern "C" void run_main(int argc, char** argv, value_t* matrix, int matrix_length) {
+
+    Stopwatch sw;
+#ifdef PROFILING
+    cudaDeviceProp deviceProp;
+    size_t freeMem_start, freeMem_end, totalMemory;
+    cudaGetDeviceProperties(&deviceProp, 0);
+    cudaMemGetInfo(&freeMem_start,&totalMemory);
+#endif
+    sw.start();
+    const char* filename= nullptr;
+
+    file_format format= DISTANCE_MATRIX;
+
+    index_t dim_max= 1;
+    value_t threshold= std::numeric_limits<value_t>::max();
+
+    float ratio= 1;
+
+    bool use_sparse= false;
+
+    for (index_t i= 0; i < argc; i++) {
+        const std::string arg(argv[i]);
+        if (arg == "--help") {
+            print_usage_and_exit(0);
+        } else if (arg == "--dim") {
+            std::string parameter= std::string(argv[++i]);
+            size_t next_pos;
+            dim_max= std::stol(parameter, &next_pos);
+            if (next_pos != parameter.size()) print_usage_and_exit(-1);
+        } else if (arg == "--threshold") {
+            std::string parameter= std::string(argv[++i]);
+            size_t next_pos;
+            threshold= std::stof(parameter, &next_pos);
+            if (next_pos != parameter.size()) print_usage_and_exit(-1);
+        } else if (arg == "--ratio") {
+            std::string parameter= std::string(argv[++i]);
+            size_t next_pos;
+            ratio= std::stof(parameter, &next_pos);
+            if (next_pos != parameter.size()) print_usage_and_exit(-1);
+        } else if (arg == "--format") {
+            std::string parameter= std::string(argv[++i]);
+            if (parameter == "lower-distance")
+                format= LOWER_DISTANCE_MATRIX;
+            else if (parameter == "distance")
+                format= DISTANCE_MATRIX;
+            else if (parameter == "point-cloud")
+                format= POINT_CLOUD;
+            else if (parameter == "dipha")
+                format= DIPHA;
+            else if (parameter == "sparse")
+                format= SPARSE;
+            else if (parameter == "binary")
+                format= BINARY;
+            else
+                print_usage_and_exit(-1);
+        } else if(arg=="--sparse") {
+            use_sparse= true;
+        }
+    }
+
+    if (format == SPARSE) {//this branch is currently unsupported in run_main, see run_main_filename() instead
+        Stopwatch IOsw;
+        IOsw.start();
+
+        std::ifstream file_stream(filename);
+        sparse_distance_matrix dist = read_sparse_distance_matrix(filename ? file_stream : std::cin);
+
+        IOsw.stop();
+#ifdef PROFILING
+        std::cerr<<IOsw.ms()/1000.0<<"s time to load sparse distance matrix (I/O)"<<std::endl;
+#endif
+        assert(dist.num_entries%2==0);
+        std::cout << "sparse distance matrix with " << dist.size() << " points and "
+                  << dist.num_entries/2 << "/" << (dist.size() * (dist.size() - 1)) / 2 << " entries"
+                  << std::endl;
+
+        ripser<sparse_distance_matrix>(std::move(dist), dim_max, threshold, ratio)
+                .compute_barcodes();
+    }else {
+        //Stopwatch IOsw;
+        //IOsw.start();
+        compressed_lower_distance_matrix dist = read_matrix_python(matrix, matrix_length, format);
+
+        //IOsw.stop();
+#ifdef PROFILING
+        //std::cerr<<IOsw.ms()/1000.0<<"s time to load python distance matrix"<<std::endl;
+        std::cerr<<"loaded python dense user matrix"<<std::endl;
+#endif
+        value_t min= std::numeric_limits<value_t>::infinity(),
+                max= -std::numeric_limits<value_t>::infinity(), max_finite= max;
+        int num_edges= 0;
+
+        value_t enclosing_radius= std::numeric_limits<value_t>::infinity();
+        for (index_t i= 0; i < dist.size(); ++i) {
+            value_t r_i= -std::numeric_limits<value_t>::infinity();
+            for (index_t j= 0; j < dist.size(); ++j) r_i= std::max(r_i, dist(i, j));
+            enclosing_radius= std::min(enclosing_radius, r_i);
+        }
+
+        if (threshold == std::numeric_limits<value_t>::max()) threshold= enclosing_radius;
+
+        for (auto d : dist.distances) {
+            min= std::min(min, d);
+            max= std::max(max, d);
+            max_finite= d != std::numeric_limits<value_t>::infinity() ? std::max(max, d) : max_finite;
+            if (d <= threshold) ++num_edges;
+        }
+
+        std::cout << "value range: [" << min << "," << max_finite << "]" << std::endl;
+
+        if (use_sparse) {
+
+            std::cout << "sparse distance matrix with " << dist.size() << " points and "
+                      << num_edges << "/" << (dist.size() * (dist.size() - 1)) / 2 << " entries"
+                      << std::endl;
+            ripser<sparse_distance_matrix>(sparse_distance_matrix(std::move(dist), threshold),
+                                           dim_max, threshold, ratio)
+                    .compute_barcodes();
+        } else {
+            std::cout << "distance matrix with " << dist.size() << " points" << std::endl;
+            ripser<compressed_lower_distance_matrix>(std::move(dist), dim_max, threshold, ratio).compute_barcodes();
+        }
+    }
+    sw.stop();
+#ifdef INDICATE_PROGRESS
+    std::cerr<<clear_line<<std::flush;
+#endif
+#ifdef PROFILING
+    std::cerr<<"total time: "<<sw.ms()/1000.0<<"s"<<std::endl;
+    cudaGetDeviceProperties(&deviceProp, 0);
+    cudaMemGetInfo(&freeMem_end,&totalMemory);
+
+    std::cerr<<"total GPU memory used: "<<(freeMem_start-freeMem_end)/1000.0/1000.0/1000.0<<"GB"<<std::endl;
+#endif
 }
 
 int main(int argc, char** argv) {

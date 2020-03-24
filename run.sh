@@ -20,19 +20,19 @@ then
     mkdir run_results
 
     echo RUNNING celegans with Ripser++
-    /usr/bin/time -v ./ripser++ --dim 3 ../examples/celegans.lower_distance_matrix 1> run_results/celegans.gpu.barcodes
+    /usr/bin/time -v ./ripser++ --dim 3 ../examples/celegans.distance_matrix 1> run_results/celegans.gpu.barcodes
     echo RUNNING celegans with Ripser
-    /usr/bin/time -v ./ripser --dim 3 ../examples/celegans.lower_distance_matrix 1> run_results/celegans.cpu.barcodes
+    /usr/bin/time -v ./ripser --dim 3 ../examples/celegans.distance_matrix 1> run_results/celegans.cpu.barcodes
 
     echo RUNNING dragon1000 with Ripser++
-    /usr/bin/time -v ./ripser++ --dim 2 ../examples/dragon1000.lower_distance_matrix 1> run_results/dragon1000.gpu.barcodes
+    /usr/bin/time -v ./ripser++ --dim 2 ../examples/dragon1000.distance_matrix 1> run_results/dragon1000.gpu.barcodes
     echo RUNNING dragon1000 with Ripser
-    /usr/bin/time -v ./ripser --dim 2 ../examples/dragon1000.lower_distance_matrix 1> run_results/dragon1000.cpu.barcodes
+    /usr/bin/time -v ./ripser --dim 2 ../examples/dragon1000.distance_matrix 1> run_results/dragon1000.cpu.barcodes
 
     echo RUNNING HIV with Ripser++
-    /usr/bin/time -v ./ripser++ --dim 2 ../examples/HIV.lower_distance_matrix 1> run_results/HIV.gpu.barcodes
+    /usr/bin/time -v ./ripser++ --dim 2 ../examples/HIV.distance_matrix 1> run_results/HIV.gpu.barcodes
     echo RUNNING HIV with Ripser
-    /usr/bin/time -v ./ripser --dim 2 ../examples/HIV.lower_distance_matrix 1> run_results/HIV.cpu.barcodes
+    /usr/bin/time -v ./ripser --dim 2 ../examples/HIV.distance_matrix 1> run_results/HIV.cpu.barcodes
 
     echo RUNNING o3_4096 with Ripser++
     /usr/bin/time -v ./ripser++ --threshold 1.4 --format point-cloud --dim 3 --sparse ../examples/o3_4096.point_cloud 1> run_results/o3_4096.gpu.barcodes
@@ -40,14 +40,14 @@ then
     /usr/bin/time -v ./ripser --threshold 1.4 --format point-cloud --dim 3 ../examples/o3_4096.point_cloud 1> run_results/o3_4096.cpu.barcodes
 
     echo RUNNING sphere_3_192 with Ripser++
-    /usr/bin/time -v ./ripser++ --dim 3 ../examples/sphere_3_192.lower_distance_matrix 1> run_results/sphere_3_192.gpu.barcodes
+    /usr/bin/time -v ./ripser++ --dim 3 ../examples/sphere_3_192.distance_matrix.lower_triangular 1> run_results/sphere_3_192.gpu.barcodes
     echo RUNNING sphere_3_192 with Ripser
-    /usr/bin/time -v ./ripser --dim 3 ../examples/sphere_3_192.lower_distance_matrix 1> run_results/sphere_3_192.cpu.barcodes
+    /usr/bin/time -v ./ripser --dim 3 ../examples/sphere_3_192.distance_matrix.lower_triangular 1> run_results/sphere_3_192.cpu.barcodes
 
     echo RUNNING Vicsek300_300_of_300 with Ripser++
-    /usr/bin/time -v ./ripser++ --dim 3 ../examples/Vicsek300_300_of_300.lower_distance_matrix 1> run_results/Vicsek300_300_of_300.gpu.barcodes
+    /usr/bin/time -v ./ripser++ --dim 3 ../examples/Vicsek300_300_of_300.distance_matrix 1> run_results/Vicsek300_300_of_300.gpu.barcodes
     echo RUNNING Vicsek300_300_of_300 with Ripser
-    /usr/bin/time -v ./ripser --dim 3 ../examples/Vicsek300_300_of_300.lower_distance_matrix 1> run_results/Vicsek300_300_of_300.cpu.barcodes
+    /usr/bin/time -v ./ripser --dim 3 ../examples/Vicsek300_300_of_300.distance_matrix 1> run_results/Vicsek300_300_of_300.cpu.barcodes
 
 else
     echo "please run the command 'source install.sh' to build ripser and ripser++ in the build folder before running the command 'source run.sh' in the build folder"
