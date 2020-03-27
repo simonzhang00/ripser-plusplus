@@ -63,7 +63,7 @@ set(CMAKE_CXX_STANDARD 11)
 
 add_library(phmap SHARED ../include/phmap_interface/phmap_interface.cpp)
 
-add_executable(ripser ../ripser.cpp)
+#add_executable(ripser ../ripser.cpp)
 
 cuda_add_library(pyripser++ SHARED ../ripser++.cu)
 #target_compile_definitions(pyripser++ PUBLIC ASSEMBLE_REDUCTION_SUBMATRIX)
@@ -73,11 +73,11 @@ cuda_add_library(pyripser++ SHARED ../ripser++.cu)
 
 target_link_libraries(pyripser++ phmap)
 
-cuda_add_executable(ripser++ ../ripser++.cu)
+#cuda_add_executable(ripser++ ../ripser++.cu)
 #target_compile_definitions(ripser++ PUBLIC ASSEMBLE_REDUCTION_SUBMATRIX)
 #target_compile_definitions(ripser++ PUBLIC INDICATE_PROGRESS)
 #target_compile_definitions(ripser++ PUBLIC CPUONLY_SPARSE_HASHMAP)#GCC version MUST be <=7.3 (tested on version 7.3)
 #target_compile_definitions(ripser++ PUBLIC CPUONLY_ASSEMBLE_REDUCTION_MATRIX)
 
 
-target_link_libraries(ripser++ phmap)
+#target_link_libraries(ripser++ phmap)

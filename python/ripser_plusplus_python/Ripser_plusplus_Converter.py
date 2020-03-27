@@ -25,9 +25,8 @@ def printHelpAndExit(msg):
                     file_name: Must be of type string
     For more information, please see README.md under ripser_plusplus_python folder.
     '''
-    print(error_msg, sys.stderr)
 
-    ripserpluspluserror_msg= '''
+    error_msg= error_msg+ '''
 
     Ripser++ Options (for First Argument of run):
 
@@ -44,7 +43,7 @@ def printHelpAndExit(msg):
     --sparse         force sparse computation
     --ratio <r>      only show persistence pairs with death/birth ratio > r
     '''
-    print(ripserpluspluserror_msg, sys.stderr)
+    print(error_msg, sys.stderr)
     quit()
 '''
 Searches the path and all its children for file named name
@@ -68,8 +67,6 @@ def Ripser_plusplus_Converter(prog, arguments, file_name, file_format, user_matr
         user_matrix = None
 
     matrix_formats = ["distance", "lower-distance", "point-cloud", "sparse", "dipha", "binary"]
-
-    # matrix = np.array([])
 
     # Read from file if not given
     if user_matrix is None:
@@ -172,7 +169,7 @@ def distance_matrix_user_matrix(user_matrix):
     # Check size
     check = checkVector(user_matrix)
     if not check:
-        printHelpAndExit("User matrix not under the size constraint, number_of_elements = quadtaric_solution * (quadratic_solution-1)/2, where quadratic_solution = (1 + sqrt(1 + 8 * number_of_elements))/2")
+        printHelpAndExit("User matrix not under the size constraint, number_of_elements = quadratic_solution * (quadratic_solution-1)/2, where quadratic_solution = (1 + sqrt(1 + 8 * number_of_elements))/2")
         return   
 
     return user_matrix.flatten()
@@ -196,7 +193,7 @@ def lower_distance_matrix_user_matrix(user_matrix):
     # Check size
     check = checkVector(user_matrix)
     if not check:
-        printHelpAndExit("Vector not under the size constraint, number_of_elements = quadtaric_solution * (quadratic_solution-1)/2, where quadratic_solution = (1 + sqrt(1 + 8 * number_of_elements))/2")
+        printHelpAndExit("Vector not under the size constraint, number_of_elements = quadratic_solution * (quadratic_solution-1)/2, where quadratic_solution = (1 + sqrt(1 + 8 * number_of_elements))/2")
         return
 
     return user_matrix.flatten()
@@ -206,7 +203,7 @@ Runs ripser++ with point_cloud setting using user_matrix
 user_matrix -- entered user matrix
 '''
 def point_cloud_user_matrix(user_matrix):
-    printHelpAndExit("point-cloud user matrix is not supported, please load using a file name.")
+    printHelpAndExit("Currently point-cloud user matrix is not supported, please load using a file name.")
     return
     
 

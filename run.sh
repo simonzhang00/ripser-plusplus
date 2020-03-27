@@ -1,19 +1,21 @@
 #!/bin/bash
 
-#current directory should be the ripser-plusplus/build folder
-#please source this shell script in the ripser-plusplus/build folder AFTER running 'source install.sh' in the ripser-plusplus folder
+# this is an experiment measuring the performance improvement of Ripser++ over Ripser
 
-#datasets to run:
-#celegans
-#dragon1000
-#HIV
-#o3_4096
-#sphere_3_192
-#Vicsek300_300_of_300
+# current directory should be the ripser-plusplus/build folder
+# please source this shell script in the ripser-plusplus/build folder AFTER running 'source install_simple.sh' in the ripser-plusplus folder
 
-#system requirements: 
-#software: ripser++ and ripser, /usr/bin/time linux command, the latest version of cmake and cuda (e.g cmake version 3.10.2 and cuda version 9.2.) and gcc 7.3.0.
-#hardware: a GPU with atleast 20GB device DRAM to run ripser++ (tested on a Tesla V100 GPU with 32 GB device memory)
+# datasets to run:
+# celegans
+# dragon1000
+# HIV
+# o3_4096
+# sphere_3_192
+# Vicsek300_300_of_300
+
+# system requirements:
+# software: ripser++ and ripser, /usr/bin/time linux command, the latest version of cmake and cuda (e.g cmake version 3.10.2 and cuda version 9.2.) and gcc 7.3.0.
+# hardware: a GPU with atleast 20GB device DRAM to run ripser++ (tested on a Tesla V100 GPU with 32 GB device memory)
 
 if [ -e ripser++ -a -e ripser ]
 then

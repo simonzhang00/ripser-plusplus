@@ -74,13 +74,13 @@ The following preprocessor directives are defined by default and may be turned o
 
 Please install Ripser++ (see previous section) before trying to run the software.
 
-Let the current directory be the build folder, then, assuming the above installation procedure worked, type the command:
+Let the current directory be the build directory, then, assuming the above installation procedure worked, type the command:
 ```
 ./ripser++ --dim 3 ../examples/sphere_3_192.distance_matrix.lower_triangular
 ```
 With a Tesla V100 GPU with 32 GB device memory, this should take just a few seconds (e.g. ~2 to 3 seconds).
 
-While in the build folder, to compare Ripser++ with the August 2019 version of [Ripser](https://github.com/Ripser/ripser) and run all 6 datasets provided in the examples folder, type:
+While in the build directory, to compare Ripser++ with the August 2019 version of [Ripser](https://github.com/Ripser/ripser) and run all 6 datasets provided in the examples directory, type:
 
 ```
 source run.sh
@@ -89,7 +89,7 @@ The profiling results should print out.
 
 Note: Ripser is very slow (e.g. celegans will take 3-4 minutes to run on Ripser) on these datasets, while Ripser++ will run in seconds on a 32 GB device memory Tesla V100 GPU, so please be patient when the run.sh script runs.
 
-After every command in run.sh has ran, check in your build folder the new directory: run_results. In that directory should be the files (dataset).gpu.barcodes and (dataset).cpu.barcodes for all datasets. (e.g. celegans.gpu.barcodes and celegans.cpu.barcodes) where (dataset).gpu.barcodes are the barcodes of Ripser++ on dataset and (dataset).cpu.barcodes is the profiling of Ripser on (dataset). If you would like to store the profiling results as well, open run.sh and append to the end of each command that runs ripser++: `2> (dataset).gpu.prof` and `2> (dataset).cpu.prof` to the command that runs ripser.
+After every command in run.sh has ran, check in your build directory the new directory: run_results. In that directory should be the files (dataset).gpu.barcodes and (dataset).cpu.barcodes for all datasets. (e.g. celegans.gpu.barcodes and celegans.cpu.barcodes) where (dataset).gpu.barcodes are the barcodes of Ripser++ on dataset and (dataset).cpu.barcodes is the profiling of Ripser on (dataset). If you would like to store the profiling results as well, open run.sh and append to the end of each command that runs ripser++: `2> (dataset).gpu.prof` and `2> (dataset).cpu.prof` to the command that runs ripser.
 
 e.g.
 ```
@@ -98,13 +98,13 @@ e.g.
 
 Open the *.gpu.barcodes and *.cpu.barcodes files in the text editor to see the barcodes.
 
-In general, to run in the build folder, type:
+In general, to run in the build directory, type:
 
 ```
 ./ripser++ [options] inputfile
 ```
 
-where inputfile has path relative to the build folder
+where inputfile has path relative to the build directory
 
 options:
 
@@ -141,7 +141,7 @@ We provide 6 datasets that are also used in our experiments. For more datasets s
 
 ## Python Bindings
 
-Birkan Gokbag is the author of Python bindings for Ripser++. For information on how to use the Python bindings, consult the README documentation under the ripser-plusplus/python folder.
+Birkan Gokbag is the author of Python bindings for Ripser++. For information on how to use the Python bindings, consult the README documentation under the ripser-plusplus/python/ directory.
 
 To install the Python bindings from the ripser-plusplus directory, type the command:
 
@@ -149,9 +149,9 @@ To install the Python bindings from the ripser-plusplus directory, type the comm
 source install_w_python_bindings.sh
 ```
 
-This will take you to the ripser-plusplus/python/working_directory folder after installation. In this folder you can write your own Python scripts to preprocess data to form distance matrices. For example, one can apply the approximation algorithm found [here](https://ripser.scikit-tda.org/notebooks/Approximate%20Sparse%20Filtrations.html) to sparsify distance matrices up to some approximation factor on barcode lengths. This can be used when the filtration size becomes unwieldy.
+This will take you to the ripser-plusplus/python/working_directory/ directory after installation. In this directory you can write your own Python scripts to preprocess data to form distance matrices. For example, one can apply the approximation algorithm found [here](https://ripser.scikit-tda.org/notebooks/Approximate%20Sparse%20Filtrations.html) to sparsify distance matrices up to some approximation factor on barcode lengths. This can be used when the filtration size becomes unwieldy.
 
-**Note** you should either run install_w_python_bindings.sh from the ripser-plusplus directory every time you start a new session or manually set the PYTHONPATH environment variable for each session to make the Python bindings work. Otherwise, you can add the line: sys.path.insert(0, '../') to any Python script in the working_directory.
+**Note**: you should either run ```source install_w_python_bindings.sh``` from the ripser-plusplus directory every time you start a new session or manually set the PYTHONPATH environment variable for each session to make the Python bindings work. Otherwise, you can add the line: sys.path.insert(0, '../') to any Python script in the working_directory. If you have enough priveleges on your system, you can also run ```pip install .``` in the ripser-plusplus/python/ directory.
 
 ## Citing:
 

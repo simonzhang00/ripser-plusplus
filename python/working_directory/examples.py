@@ -94,6 +94,14 @@ args = "--dim 1 --format lower-distance --threshold 20"
 file_name_or_matrix = np.random.permutation(int((n*(n-1))/2))
 rpp_py.run(args, file_name_or_matrix)
 
+
+'''
+EXAMPLE FROM THE python/README
+'''
+rpp_py.run("--format lower-distance",np.transpose(np.array([3,2,1])))
+rpp_py.run("--format lower-distance",np.array([3,2,1]))
+rpp_py.run("--format distance", np.array([[0,3,2],[3,0,1],[2,1,0]]))
+
 '''
 POINT-CLOUD MATRIX - USER MATRIX
 '''

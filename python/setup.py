@@ -21,8 +21,9 @@ setup(
     description="Python binding for Ripser++.",
     long_description=README,
     url="https://github.com/simonzhang00/ripser-plusplus",
+    #map between name and dir
     package_dir={'ripser_plusplus_python': 'ripser_plusplus_python'},
-    packages=[''],
+    packages=['ripser_plusplus_python'],
     include_package_data=True,
     keywords=[],
     scripts=[],
@@ -33,6 +34,7 @@ setup(
     license="License :: OSI Approved :: MIT License",
     classifiers=[
         "Programming Language :: Python",
-        "Operating System :: OS Independent",
+        #"Operating System :: OS Independent",
+        "Topic :: System :: Operating System Kernels :: Linux",
     ],
 )

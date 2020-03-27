@@ -78,6 +78,7 @@
 #include <algorithm>
 #include <profiling/stopwatch.h>
 #include <sparsehash/dense_hash_map>
+#include <phmap_interface/phmap_interface.h>
 
 #include <omp.h>
 #include <thrust/fill.h>
@@ -113,12 +114,6 @@ static const std::string clear_line("\r\033[K");
 
 typedef float value_t;
 typedef int64_t index_t;
-
-extern void phmap_put(index_t, index_t);//put the key,value pair into the hashmap
-
-extern index_t phmap_get_value(index_t);//return -1 if key is not in the hash map, otherwise the corresponding value of the key
-
-extern void phmap_clear();//clears the hashmap
 
 struct diameter_index_t_struct{
     value_t diameter;
@@ -1541,7 +1536,7 @@ private:
     //d_pivot_column_index_OR_nonapparent_cols is d_nonapparent_cols when used in gpuscan() and compute_pairs() and is d_pivot_column_index when in gpu_assemble_columns()
     index_t* d_pivot_column_index_OR_nonapparent_cols;//the pivot column index hashmap represented on GPU as an array OR the set of nonapparent columns on GPU
 
-    index_t max_num_simplices_forall_dims;//the total number of simplices of dimension dim_max possible (this assumes no threshold condition to sparsify the simplicial compmlex
+    index_t max_num_simplices_forall_dims;//the total number of simplices of dimension dim_max possible (this assumes no threshold condition to sparsify the simplicial complex)
     //the total number of simplices in the dim_max+1 dimension (a factor n larger than max_num_simplices_forall_dims), infeasible to allocate with this number if max_num_simplices_forall_dims is already pushing the memory limits.
 
     struct diameter_index_t_struct* d_columns_to_reduce;//GPU copy of the columns to reduce depending on the current dimension
