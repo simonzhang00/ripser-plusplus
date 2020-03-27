@@ -1,12 +1,10 @@
 # Ripser++
 
-Copyright 2019, 2020 The Ohio State University
-
-Simon Zhang, Mengbai Xiao, Hao Wang
+Copyright © 2019, 2020 Simon Zhang, Mengbai Xiao, Hao Wang
 
 Python bindings: Birkan Gokbag
 
-Ripser++ is built on top of the Ripser `[1]` software written by Ulrich Bauer and utilizes both GPU and CPU `[3]` to accelerate the computation of Vietoris-Rips persistence barcodes.
+Ripser++ `[3]` is built on top of the Ripser `[1]` software written by Ulrich Bauer and utilizes both GPU and CPU (via separation of parallelisms `[4]`) to accelerate the computation of Vietoris-Rips persistence barcodes.
 
 ## Description
 
@@ -25,13 +23,13 @@ Dependencies:
 3. Make sure GCC is installed at the correct version (e.g. GCC 7.3.0).
     Note: If you turn on the preprocessor directive: `#define CPUONLY_SPARSE_HASHMAP`, then you must lower your GCC version to 7.3.0.
 
-4. A Linux operating system
+4. A Linux operating system is needed.
 
 Ripser++ is intended to run on high performance computing systems.
 
 Thus, a GPU with enough device memory is needed to run large datasets. (e.g. Tesla V100 GPU with 32GB device DRAM). If the system's GPU is not compatible, or the system does not have a GPU, error messages will appear.
 
-Furthermore, it is also preferable to have a multicore processor (e.g. >= 28 cores) for effective computation, and a large amount of DRAM is required for large datasets. We have tested on a 100 GB DRAM single computing node with 28 cores.
+Furthermore, it is also preferable to have a multicore processor (e.g. >= 28 cores) for high performance, and a large amount of DRAM is required for large datasets. We have tested on a 100 GB DRAM single computing node with 28 cores.
 
 Under a Linux Operating System, type the following commands:
 
@@ -62,7 +60,7 @@ The preprocessor directives that can be toggled on are as follows:
 - `CPUONLY_ASSEMBLE_REDUCTION_MATRIX`: assembles the reduction matrix (the sparse V matrix s.t. D*V=R where D is the coboundary matrix) on CPU side for matrix reduction for CPU-only computation if memory allocated for the total possible number of simplices for full Rips computation does not fit into GPU memory.
 - `CPUONLY_SPARSE_HASHMAP`: sets the hashmap to Google sparse hashmap during matrix reduction for CPU-only computation if memory allocated for the total possible number of simplices for full Rips computation does not fit into GPU memory. The GCC version must be lowered to <=7.3.0 (tested on 7.3.0) if this option is turned on. (Google sparse hash map is no longer supported)
 
-The only undefined preprocessor directive by default that may give performance on certain datasets is `ASSEMBLE_REDUCTION_SUBMATRIX`. On certain datasets, especially those where submatrix reduction takes up a large amount of time, the reduction submatrix for submatrix reduction lowers the number of column additions compared to oblivious submatrix reduction at the cost of the overhead of keeping track of the reduction submatrix. However, for most of the datasets we tested on, there is no need to adjust the preprocessor directives for performance.
+The only undefined preprocessor directive by default that may improve performance on certain datasets is `ASSEMBLE_REDUCTION_SUBMATRIX`. On certain datasets, especially those where submatrix reduction takes up a large amount of time, the reduction submatrix for submatrix reduction lowers the number of column additions compared to oblivious submatrix reduction at the cost of the overhead of keeping track of the reduction submatrix. However, for most of the datasets we tested on, there is no need to adjust the preprocessor directives for performance.
 
 The following preprocessor directives are defined by default and may be turned off by manually commenting them out in the code:
 - `PRINT_PERSISTENCE_PAIRS`: prints out the persistence pairs to stdout.
@@ -135,7 +133,8 @@ The options for Ripser++ are almost the same as those in [Ripser](https://github
 - `--format`: input formats are the same as those in Ripser. The lower_distance_matrix is the most common input data type format and understood by Ripser++ by default. It is also common to specify a point-cloud in Euclidean space as well.
 - `--sparse`: changes the algorithm for computing persistence barcodes and assumes a sparse distance matrix (where many of the distances between points are "infinity"). This can allow for higher dimensional computations and approximations to full Rips persistence computation, so long as the distance matrix is actually sparse. Notice that there is no fail-safe mechanism for the --sparse option when there is not enough GPU device memory to hold the filtration; Thus the program will exit with errors in this case. For the full-Rips case, however, the program can run on CPU-only mode upon discovering there is not enough device memory.
 - `--ratio`: only print persistence pairs with death/birth > given ratio
-## For Datasets:
+
+## Datasets:
 
 We provide 6 datasets that are also used in our experiments. For more datasets see [Ulrich Bauer](https://github.com/Ripser/ripser)'s original Ripser repository Github site as well as [Nina Otter](https://github.com/n-otter/PH-roadmap)'s repository on Github for her paper `[2]`. You can generate custom finite metric spaces (distance matrices) or Euclidean space point clouds manually as well.
 
@@ -149,9 +148,9 @@ To install the Python bindings from the ripser-plusplus directory, type the comm
 source install_w_python_bindings.sh
 ```
 
-This will take you to the ripser-plusplus/python/working_directory/ directory after installation. In this directory you can write your own Python scripts to preprocess data to form distance matrices. For example, one can apply the approximation algorithm found [here](https://ripser.scikit-tda.org/notebooks/Approximate%20Sparse%20Filtrations.html) to sparsify distance matrices up to some approximation factor on barcode lengths. This can be used when the filtration size becomes unwieldy.
+This will take you to the ripser-plusplus/python/working_directory/ directory after installation. In this directory you can, for example, write your own Python scripts to preprocess data to form distance matrices and subsequently run Ripser++ on such preprocessed data. In particular, one can apply the approximation algorithm found [here](https://ripser.scikit-tda.org/notebooks/Approximate%20Sparse%20Filtrations.html) to sparsify distance matrices up to some approximation factor on barcode lengths. This can be used when the filtration size becomes unwieldy.
 
-**Note**: you should either run ```source install_w_python_bindings.sh``` from the ripser-plusplus directory every time you start a new session or manually set the PYTHONPATH environment variable for each session to make the Python bindings work. Otherwise, you can add the line: sys.path.insert(0, '../') to any Python script in the working_directory. If you have enough priveleges on your system, you can also run ```pip install .``` in the ripser-plusplus/python/ directory.
+**Note**: you should either run ```source install_w_python_bindings.sh``` from the ripser-plusplus directory every time you start a new session or manually set the PYTHONPATH environment variable for each session to make the Python bindings work (be able to import ripser_plusplus_python). Otherwise, you can add the line: sys.path.insert(0, '../') to any Python script in the working_directory. If you have enough privileges on your system, you can also run ```pip install .``` in the ripser-plusplus/python/ directory.
 
 ## Citing:
 
@@ -168,4 +167,5 @@ Eprint = {arXiv:2003.07989},
 
 1. Bauer, Ulrich. "Ripser: efficient computation of Vietoris-Rips persistence barcodes." _arXiv preprint arXiv:1908.02518_ (2019).
 2. Otter, Nina, et al. "A roadmap for the computation of persistent homology." _EPJ Data Science_ 6.1 (2017): 17.
-3. Zhang, Simon, et al. "HYPHA: a framework based on separation of parallelisms to accelerate persistent homology matrix reduction." _Proceedings of the ACM International Conference on Supercomputing_. ACM, 2019.
+3. Zhang, Simon, et al. "GPU-Accelerated Computation of Vietoris-Rips Persistence Barcodes." _Proceedings of the Symposium on Computational Geometry_. (SoCG 2020)
+4. Zhang, Simon, et al. "HYPHA: a framework based on separation of parallelisms to accelerate persistent homology matrix reduction." _Proceedings of the ACM International Conference on Supercomputing_. ACM, 2019.
