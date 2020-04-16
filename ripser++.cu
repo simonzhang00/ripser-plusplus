@@ -7,7 +7,7 @@
 
  Python Bindings: Birkan Gokbag
 
- Ripser codebase, written by Ulrich Bauer.
+ Copyright (c) 2015-2019 Ripser codebase, written by Ulrich Bauer
 
  Permission is hereby granted, free of charge, to any person obtaining a copy
  of this software and associated documentation files (the "Software"), to deal
@@ -164,6 +164,12 @@ __host__ __device__ value_t hd_max(value_t a, value_t b){
     return a>b?a:b;
 }
 
+void check_overflow(index_t i){
+    if(i<0){
+        throw std::overflow_error("simplex index "+std::to_string((uint64_t)i)+" in filtration is overflowing past 64 bits signed integer");
+    }
+}
+
 //assume i>j (lower triangular with i indexing rows and j indexing columns
 #define LOWER_DISTANCE_INDEX(i,j,n) (((i)*((i)-1)/2)+(j))
 class binomial_coeff_table {
@@ -193,6 +199,7 @@ public:
                     binoms[BINOM_TRANSPOSE(i,j)]= binoms[BINOM_TRANSPOSE(i-1,j-1)]+binoms[BINOM_TRANSPOSE(i-1,j)];
                 }
             }
+            check_overflow(binoms[BINOM_TRANSPOSE(i,std::min(i>>1,k))]);
         }
     }
 
@@ -1595,7 +1602,7 @@ public:
 
         cudaMemGetInfo(&freeMem,&totalMem);
 #ifdef PROFILING
-        std::cerr<<"before calculation, sparse: total mem, free mem: "<<totalMem <<" "<<freeMem<<std::endl;
+        std::cerr<<"before calculation, sparse: total mem, free mem: "<<totalMem <<" bytes, "<<freeMem<<" bytes"<<std::endl;
 #endif
         index_t gpumem_char_array_bytes_factor= sizeof(char);
         index_t gpumem_index_t_array_bytes_factor= sizeof(index_t);
@@ -1622,7 +1629,7 @@ public:
                 +gpumem_index_t_pairs_array_bytes_factor;
 
 #ifdef PROFILING
-        std::cerr<<"sparse final calculation for memory, free memory: "<<freeMem <<", sizeof_factor_sum: "<<sizeof_factor_sum<<std::endl;
+        std::cerr<<"sparse final calculation for memory, free memory: "<<freeMem <<" bytes, sizeof_factor_sum: "<<sizeof_factor_sum<<" bytes"<<std::endl;
 #endif
         return (freeMem*0.7-fixedmemory)/sizeof_factor_sum;
     }
@@ -1636,7 +1643,7 @@ public:
 
         cudaMemGetInfo(&freeMem,&totalMem);
 #ifdef PROFILING
-        std::cerr<<"GPU memory before full rips memory calculation, total mem: "<< totalMem<<", free mem: "<<freeMem<<std::endl;
+        std::cerr<<"GPU memory before full rips memory calculation, total mem: "<< totalMem<<" bytes, free mem: "<<freeMem<<" bytes"<<std::endl;
 #endif
         do{
             index_t gpu_num_simplices_forall_dims= gpu_dim_max<n/2?get_num_simplices_for_dim(gpu_dim_max): get_num_simplices_for_dim(n/2);
@@ -1670,7 +1677,7 @@ public:
 
 #ifdef PROFILING
                 //std::cerr<<"free gpu memory for full rips by calculation in bytes for gpu dim: "<<gpu_dim_max<<": "<<freeMem-gpu_alloc_memory_in_bytes<<std::endl;
-                std::cerr<<"gpu memory needed for full rips by calculation in bytes for dim: "<<gpu_dim_max<<": "<<gpu_alloc_memory_in_bytes<<std::endl;
+                std::cerr<<"gpu memory needed for full rips by calculation in bytes for dim: "<<gpu_dim_max<<": "<<gpu_alloc_memory_in_bytes<<" bytes"<<std::endl;
 #endif
                 if (gpu_alloc_memory_in_bytes <= freeMem){
                     return gpu_dim_max;
@@ -1692,7 +1699,7 @@ public:
                                            + gpumem_index_t_pairs_array_bytes;//last one is for buffer needed for sorting
 #ifdef PROFILING
                 //std::cerr<<"(sparse) free gpu memory for full rips by calculation in bytes for gpu dim: "<<gpu_dim_max<<": "<<freeMem-gpu_alloc_memory_in_bytes<<std::endl;
-                std::cerr<<"(sparse) gpu memory needed for full rips by calculation in bytes for dim: "<<gpu_dim_max<<": "<<gpu_alloc_memory_in_bytes<<std::endl;
+                std::cerr<<"(sparse) gpu memory needed for full rips by calculation in bytes for dim: "<<gpu_dim_max<<": "<<gpu_alloc_memory_in_bytes<<" bytes"<<std::endl;
 #endif
                 if (gpu_alloc_memory_in_bytes <= freeMem){
                     return gpu_dim_max;
@@ -2455,7 +2462,7 @@ void ripser<compressed_lower_distance_matrix>::gpuscan(const index_t dim){
     CUDACHECK(cudaDeviceSynchronize());
     sw.stop();
 #ifdef PROFILING
-    std::cerr<<"gpu scan kernel time for dim: "<<dim<<": "<<sw.ms()/1000.0<<std::endl;
+    std::cerr<<"gpu scan kernel time for dim: "<<dim<<": "<<sw.ms()/1000.0<<"s"<<std::endl;
 #endif
 
     CUDACHECK(cudaDeviceSynchronize());
@@ -2497,7 +2504,7 @@ void ripser<compressed_lower_distance_matrix>::gpuscan(const index_t dim){
 #endif
     postprocessing.stop();
 #ifdef PROFILING
-    std::cerr<<"INSERTION POSTPROCESSING FOR GPU IN DIM "<<dim<<": "<<postprocessing.ms()/1000.0<<std::endl;
+    std::cerr<<"INSERTION POSTPROCESSING FOR GPU IN DIM "<<dim<<": "<<postprocessing.ms()/1000.0<<"s"<<std::endl;
 #endif
 }
 
@@ -2541,7 +2548,7 @@ void ripser<sparse_distance_matrix>::gpuscan(const index_t dim){
     CUDACHECK(cudaDeviceSynchronize());
     sw.stop();
 #ifdef PROFILING
-    std::cerr<<"gpu scan kernel time for dim: "<<dim<<": "<<sw.ms()/1000.0<<std::endl;
+    std::cerr<<"gpu scan kernel time for dim: "<<dim<<": "<<sw.ms()/1000.0<<"s"<<std::endl;
 #endif
     CUDACHECK(cudaDeviceSynchronize());
 
@@ -2578,7 +2585,7 @@ void ripser<sparse_distance_matrix>::gpuscan(const index_t dim){
 #endif
     postprocessing.stop();
 #ifdef PROFILING
-    std::cerr<<"INSERTION POSTPROCESSING FOR GPU IN DIM "<<dim<<": "<<postprocessing.ms()/1000.0<<std::endl;
+    std::cerr<<"INSERTION POSTPROCESSING FOR GPU IN DIM "<<dim<<": "<<postprocessing.ms()/1000.0<<"s"<<std::endl;
 #endif
 }
 
@@ -2617,7 +2624,7 @@ void ripser<compressed_lower_distance_matrix>::gpu_assemble_columns_to_reduce_pl
 
     sw.stop();
 #ifdef PROFILING
-    std::cerr<<"time to copy hash map for dim "<<dim<<": "<<sw.ms()/1000.0<<std::endl;
+    std::cerr<<"time to copy hash map for dim "<<dim<<": "<<sw.ms()/1000.0<<"s"<<std::endl;
 #endif
 #ifdef ASSEMBLE_REDUCTION_SUBMATRIX
     cudaMemset(d_flagarray_OR_index_to_subindex, 0, sizeof(index_t)*max_num_simplices);
@@ -3026,12 +3033,12 @@ void ripser<compressed_lower_distance_matrix>::compute_barcodes() {
         }
 #ifdef PROFILING
         cudaMemGetInfo(&freeMem,&totalMem);
-        std::cerr<<"GPU memory after full rips memory calculation and allocation, total mem: "<< totalMem<<", free mem: "<<freeMem<<std::endl;
+        std::cerr<<"GPU memory after full rips memory calculation and allocation, total mem: "<< totalMem<<" bytes, free mem: "<<freeMem<<" bytes"<<std::endl;
 #endif
     }
     sw.stop();
 #ifdef PROFILING
-    std::cerr<<"CUDA PREPROCESSING TIME (e.g. memory allocation): "<<sw.ms()/1000.0<<std::endl;
+    std::cerr<<"CUDA PREPROCESSING TIME (e.g. memory allocation): "<<sw.ms()/1000.0<<"s"<<std::endl;
 #endif
     sw.start();
 
@@ -3041,14 +3048,14 @@ void ripser<compressed_lower_distance_matrix>::compute_barcodes() {
         gpu_compute_dim_0_pairs(columns_to_reduce);
         sw.stop();
 #ifdef PROFILING
-        std::cerr<<"0-dimensional persistence total computation time with GPU: "<<sw.ms()/1000.0<<std::endl;
+        std::cerr<<"0-dimensional persistence total computation time with GPU: "<<sw.ms()/1000.0<<"s"<<std::endl;
 #endif
     }else{
 
         compute_dim_0_pairs(simplices, columns_to_reduce);
         sw.stop();
 #ifdef PROFILING
-        std::cerr<<"0-dimensional persistence total computation time with CPU alone: "<<sw.ms()/1000.0<<std::endl;
+        std::cerr<<"0-dimensional persistence total computation time with CPU alone: "<<sw.ms()/1000.0<<"s"<<std::endl;
 #endif
     }
 
@@ -3071,7 +3078,7 @@ void ripser<compressed_lower_distance_matrix>::compute_barcodes() {
         //dim_forgpuscan= dim;//update dim_forgpuscan to the dimension that gpuscan was just done at
         sw.stop();
 #ifdef PROFILING
-        std::cerr<<"-SUM OF GPU MATRIX SCAN and post processing time for dim "<<dim<<": "<<sw.ms()/1000.0<<std::endl;
+        std::cerr<<"-SUM OF GPU MATRIX SCAN and post processing time for dim "<<dim<<": "<<sw.ms()/1000.0<<"s"<<std::endl;
 #endif
         sw.start();
 
@@ -3079,7 +3086,7 @@ void ripser<compressed_lower_distance_matrix>::compute_barcodes() {
                 dim, dim_forgpuscan);
         sw.stop();
 #ifdef PROFILING
-        std::cerr<<"SUBMATRIX REDUCTION TIME for dim "<< dim<<": "<<sw.ms()/1000.0<<"\n"<<std::endl;
+        std::cerr<<"SUBMATRIX REDUCTION TIME for dim "<< dim<<": "<<sw.ms()/1000.0<<"s"<<"\n"<<std::endl;
 #endif
         if (dim < gpu_dim_max) {
             sw.start();
@@ -3088,14 +3095,14 @@ void ripser<compressed_lower_distance_matrix>::compute_barcodes() {
 
 #ifdef PROFILING
             std::cerr << "ASSEMBLE COLS TIME for dim " << dim + 1 << ": " << sw.ms() / 1000.0
-                      << std::endl;
+                      << "s" << std::endl;
 #endif
         }
     }
     gpu_accel_timer.stop();
 #ifdef PROFILING
     if(gpu_dim_max>=1)
-        std::cerr<<"GPU ACCELERATED COMPUTATION from dim 0 to dim "<<gpu_dim_max<<": "<<gpu_accel_timer.ms()/1000.0<<std::endl;
+        std::cerr<<"GPU ACCELERATED COMPUTATION from dim 0 to dim "<<gpu_dim_max<<": "<<gpu_accel_timer.ms()/1000.0<<"s"<<std::endl;
 #endif
     if(dim_max>gpu_dim_max){//do cpu only computation from this point on
 #ifdef CPUONLY_SPARSE_HASHMAP
@@ -3121,7 +3128,7 @@ void ripser<compressed_lower_distance_matrix>::compute_barcodes() {
                 //cpu_assemble_columns_to_reduce(columns_to_reduce,cpu_pivot_column_index, dim+1);
                 sw.stop();
 #ifdef PROFILING
-                std::cerr<<"TIME FOR CPU ASSEMBLE: "<<sw.ms()/1000.0<<std::endl;
+                std::cerr<<"TIME FOR CPU ASSEMBLE: "<<sw.ms()/1000.0<<"s"<<std::endl;
 #endif
             }
         }
@@ -3233,12 +3240,12 @@ void ripser<sparse_distance_matrix>::compute_barcodes(){
         }
 #ifdef PROFILING
         cudaMemGetInfo(&freeMem,&totalMem);
-        std::cerr<<"after GPU memory allocation: total mem, free mem: " <<totalMem<<" "<<freeMem<<std::endl;
+        std::cerr<<"after GPU memory allocation: total mem, free mem: " <<totalMem<<" bytes, "<<freeMem<<" bytes"<<std::endl;
 #endif
     }
     sw.stop();
 #ifdef PROFILING
-    std::cerr<<"CUDA PREPROCESSING TIME (e.g. memory allocation): "<<sw.ms()/1000.0<<std::endl;
+    std::cerr<<"CUDA PREPROCESSING TIME (e.g. memory allocation): "<<sw.ms()/1000.0<<"s"<<std::endl;
 #endif
     sw.start();
 
@@ -3248,14 +3255,14 @@ void ripser<sparse_distance_matrix>::compute_barcodes(){
         gpu_compute_dim_0_pairs(columns_to_reduce);
         sw.stop();
 #ifdef PROFILING
-        std::cerr<<"0-dimensional persistence total computation time with GPU: "<<sw.ms()/1000.0<<std::endl;
+        std::cerr<<"0-dimensional persistence total computation time with GPU: "<<sw.ms()/1000.0<<"s"<<std::endl;
 #endif
     }else{
         std::vector<diameter_index_t_struct> simplices;
         compute_dim_0_pairs(simplices, columns_to_reduce);
         sw.stop();
 #ifdef PROFILING
-        std::cerr<<"0-dimensional persistence total computation time with CPU alone: "<<sw.ms()/1000.0<<std::endl;
+        std::cerr<<"0-dimensional persistence total computation time with CPU alone: "<<sw.ms()/1000.0<<"s"<<std::endl;
 #endif
     }
 
@@ -3278,7 +3285,7 @@ void ripser<sparse_distance_matrix>::compute_barcodes(){
         sw.stop();
 #ifdef PROFILING
         std::cerr << "-SUM OF GPU MATRIX SCAN and post processing time for dim " << dim << ": " << sw.ms() / 1000.0
-                  << std::endl;
+                  << "s" << std::endl;
 #endif
 
         sw.start();
@@ -3287,7 +3294,7 @@ void ripser<sparse_distance_matrix>::compute_barcodes(){
                 dim, dim_forgpuscan);
         sw.stop();
 #ifdef PROFILING
-        std::cerr << "SUBMATRIX REDUCTION TIME for dim " << dim << ": " << sw.ms() / 1000.0 << "\n" << std::endl;
+        std::cerr << "SUBMATRIX REDUCTION TIME for dim " << dim << ": " << sw.ms() / 1000.0 << "s" << "\n" << std::endl;
 #endif
         if (dim < dim_max) {
             sw.start();
@@ -3297,13 +3304,13 @@ void ripser<sparse_distance_matrix>::compute_barcodes(){
 
 #ifdef PROFILING
             std::cerr << "ASSEMBLE COLS TIME for dim " << dim + 1 << ": " << sw.ms() / 1000.0
-                      << std::endl;
+                      << "s" << std::endl;
 #endif
         }
     }
     gpu_accel_timer.stop();
 #ifdef PROFILING
-    std::cerr<<"GPU ACCELERATED COMPUTATION: "<<gpu_accel_timer.ms()/1000.0<<std::endl;
+    std::cerr<<"GPU ACCELERATED COMPUTATION: "<<gpu_accel_timer.ms()/1000.0<<"s"<<std::endl;
 #endif
 
 }

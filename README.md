@@ -16,7 +16,7 @@ After dimension 0 persistence computation, there are two stages of computation i
 
 Dependencies:
 
-1. Make sure cmake is installed at the correct version (e.g. cmake 3.10.2).
+1. Make sure CMake is installed at the correct version (e.g. CMake 3.10.2).
 
 2. Make sure CUDA is installed at the correct version (e.g. CUDA 9.2.88).
 
@@ -49,7 +49,6 @@ cd ripser-plusplus
 mkdir build
 cd build
 cmake .. && make -j$(nproc)
-cp ../run.sh run.sh
 ```
 
 There are some preprocessor directives that may be turned on or off. For example, uncomment the line (remove the hash #) : `#target_compile_definitions(ripser++ PUBLIC INDICATE_PROGRESS)` in the CMakeLists.txt file to turn on `INDICATE_PROGRESS`.
@@ -58,7 +57,7 @@ The preprocessor directives that can be toggled on are as follows:
 - `INDICATE_PROGRESS`: print out the submatrix reduction progress on console; do not use this when redirecting stderr to a file.
 - `ASSEMBLE_REDUCTION_SUBMATRIX`: assembles the reduction submatrix on CPU side where the columns in the submatrix correspond to nonapparent columns during submatrix reduction. Oblivious matrix reduction is used by default.
 - `CPUONLY_ASSEMBLE_REDUCTION_MATRIX`: assembles the reduction matrix (the sparse V matrix s.t. D*V=R where D is the coboundary matrix) on CPU side for matrix reduction for CPU-only computation if memory allocated for the total possible number of simplices for full Rips computation does not fit into GPU memory.
-- `CPUONLY_SPARSE_HASHMAP`: sets the hashmap to Google sparse hashmap during matrix reduction for CPU-only computation if memory allocated for the total possible number of simplices for full Rips computation does not fit into GPU memory. The GCC version must be lowered to <=7.3.0 (tested on 7.3.0) if this option is turned on. (Google sparse hash map is no longer supported)
+- `CPUONLY_SPARSE_HASHMAP`: sets the hashmap to Google sparse hashmap during matrix reduction for CPU-only computation if memory allocated for the total possible number of simplices for full Rips computation does not fit into GPU memory. The GCC version must be lowered to <=7.3.0 (tested on 7.3.0) if this option is turned on. (Google sparse hash map is no longer supported and thus may not work)
 
 The only undefined preprocessor directive by default that may improve performance on certain datasets is `ASSEMBLE_REDUCTION_SUBMATRIX`. On certain datasets, especially those where submatrix reduction takes up a large amount of time, the reduction submatrix for submatrix reduction lowers the number of column additions compared to oblivious submatrix reduction at the cost of the overhead of keeping track of the reduction submatrix. However, for most of the datasets we tested on, there is no need to adjust the preprocessor directives for performance.
 
@@ -72,20 +71,31 @@ The following preprocessor directives are defined by default and may be turned o
 
 Please install Ripser++ (see previous section) before trying to run the software.
 
-Let the current directory be the build directory, then, assuming the above installation procedure worked, type the command:
+Let the current directory be the build directory, then, assuming the above installation procedure worked, type the following command to execute the functional tests to check on installation and GPU compatibility:
+
+```
+make tests
+```
+
+The functional tests are run with CMake and [shunit2](https://github.com/kward/shunit2). Your system should be compatible with both. All tests are performed with dimension 1 computation.
+
+To see the performance of Ripser++ on a single data set, type the command:
+
 ```
 ./ripser++ --dim 3 ../examples/sphere_3_192.distance_matrix.lower_triangular
 ```
+
 With a Tesla V100 GPU with 32 GB device memory, this should take just a few seconds (e.g. ~2 to 3 seconds).
 
-While in the build directory, to compare Ripser++ with the August 2019 version of [Ripser](https://github.com/Ripser/ripser) and run all 6 datasets provided in the examples directory, type:
+While in the build directory, to compare the performance of Ripser++ with the August 2019 version of [Ripser](https://github.com/Ripser/ripser) and run all 6 datasets provided in the examples directory, type:
 
 ```
 source run.sh
 ```
+
 The profiling results should print out.
 
-Note: Ripser is very slow (e.g. celegans will take 3-4 minutes to run on Ripser) on these datasets, while Ripser++ will run in seconds on a 32 GB device memory Tesla V100 GPU, so please be patient when the run.sh script runs.
+**Note**: Ripser is very slow (e.g. celegans will take 3-4 minutes to run on Ripser) on these datasets, while Ripser++ will run in seconds on a 32 GB device memory Tesla V100 GPU, so please be patient when the run.sh script runs.
 
 After every command in run.sh has ran, check in your build directory the new directory: run_results. In that directory should be the files (dataset).gpu.barcodes and (dataset).cpu.barcodes for all datasets. (e.g. celegans.gpu.barcodes and celegans.cpu.barcodes) where (dataset).gpu.barcodes are the barcodes of Ripser++ on dataset and (dataset).cpu.barcodes is the profiling of Ripser on (dataset). If you would like to store the profiling results as well, open run.sh and append to the end of each command that runs ripser++: `2> (dataset).gpu.prof` and `2> (dataset).cpu.prof` to the command that runs ripser.
 

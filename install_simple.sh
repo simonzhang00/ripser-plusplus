@@ -16,7 +16,8 @@ cmake ..
 #uncomment the -j$(nproc) optionally for multicore compilation
 make #-j$(nproc)
 
-cp ../run.sh run.sh
+#cp ../testing/run.sh run.sh
+
 GREEN='\033[0;32m'
 BLUE='\033[1;34m'
 NC='\033[0m'

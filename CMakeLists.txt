@@ -66,12 +66,12 @@ add_executable(ripser ripser.cpp)
 cuda_add_executable(ripser++ ripser++.cu)
 #target_compile_definitions(ripser++ PUBLIC ASSEMBLE_REDUCTION_SUBMATRIX)
 #target_compile_definitions(ripser++ PUBLIC INDICATE_PROGRESS)
-#target_compile_definitions(ripser++ PUBLIC CPUONLY_SPARSE_HASHMAP)#GCC version MUST be <=7.3 (tested on version 7.3), Google sparse hashmap no longer supported
+#target_compile_definitions(ripser++ PUBLIC CPUONLY_SPARSE_HASHMAP)#GCC version MUST be <=7.3 (tested on version 7.3), Google sparse hashmap no longer supported and thus may not work
 #target_compile_definitions(ripser++ PUBLIC CPUONLY_ASSEMBLE_REDUCTION_MATRIX)
 
 target_link_libraries(ripser++ phmap)
 
-# (Optional) script for using this CMakeLists.txt build libpyripser++.so for Python Bindings in the ripser-plusplus/python/bin folder
+# (Optional) script for using this CMakeLists.txt to build libpyripser++.so for Python Bindings in the ripser-plusplus/python/bin folder
 #uncomment (one #) per line below to let this cmake build in the ripser-plusplus/python/bin folder
 #add_library(phmap_shared SHARED include/phmap_interface/phmap_interface.cpp)
 #cuda_add_library(pyripser++ SHARED ripser++.cu)
@@ -83,3 +83,26 @@ target_link_libraries(ripser++ phmap)
 #target_link_libraries(pyripser++ phmap_shared)
 
 #set_target_properties(pyripser++ PROPERTIES LIBRARY_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/python/bin")
+
+#FUNCTIONAL TESTING:
+#https://stackoverflow.com/questions/697560/how-to-copy-directory-from-source-tree-to-binary-tree
+add_custom_target(load_testing ALL
+        COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_SOURCE_DIR}/testing ${CMAKE_BINARY_DIR}/testing
+        DEPENDS ${MY_TARGET})
+
+add_custom_target(
+        tests
+        DEPENDS functional_tests
+)
+
+#https://stackoverflow.com/questions/35725750/how-to-execute-a-shell-script-using-cmake-post-build
+add_custom_command(OUTPUT functional_tests
+        POST_BUILD
+        COMMAND /bin/sh ${PROJECT_SOURCE_DIR}/testing/tests.sh
+        )
+
+add_custom_command(
+        TARGET ${PROJECT_NAME} POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy
+        ${CMAKE_CURRENT_SOURCE_DIR}/testing/run.sh
+        $<TARGET_FILE_DIR:${PROJECT_NAME}>)

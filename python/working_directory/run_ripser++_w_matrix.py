@@ -22,7 +22,7 @@ print("Running Python Integration w/ Ripser ++", file=sys.stderr)
 # Run the program however many times needed
 for i in range(10):   
     matrix= np.random.permutation(int((n*(n-1))/2))
-    print(matrix)
+    #print(matrix)
     rpp_py.run(args, matrix)
 
 '''
@@ -37,5 +37,5 @@ file_name_or_matrix = file_name_or_matrix + file_name_or_matrix.T - np.diag(file
 # Make diagonal be 0
 np.fill_diagonal(file_name_or_matrix, 0)
 
-print(file_name_or_matrix)
+#print(file_name_or_matrix)
 rpp_py.run(args, file_name_or_matrix)
