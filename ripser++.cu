@@ -1185,7 +1185,7 @@ __global__ void coboundary_findapparent_single_kernel(value_t* d_cidx_to_diamete
                             remove_v= extra_vertex;//recall: extra_vertex= v+1
                             passed_extra_v= true;
                         }
-                        //this last else says: if j==dim+1 and we never passed extra vertex, then we must remove extra_vertex as the last vertex to remove to form a face.
+                        //this last else says: if j==dim+1 and we never passed extra vertex, then we must remove extra_vertex as the last vertex to remove to form a facet.
                     }else {//there is no need to check s_v>extra_vertex, we never passed extra_vertex, so we need to remove extra_vertex for the last check
                         remove_v= extra_vertex;//recall; v+1 since there is a v-- before this
                         passed_extra_v= true;
@@ -1439,7 +1439,6 @@ __global__ void coboundary_findapparent_sparse_single_kernel(struct diameter_ind
                             right= mid-1;
                         }
                     }
-                    //assert(facet_of_row_diameter!=-1);
 
                     if (facet_of_row_combinatorial_index == col_cidx && facet_of_row_diameter == col_diameter) {
                         //coboundary column tid has an apparent pair, record it
@@ -1567,7 +1566,7 @@ private:
     index_t* h_flagarray_OR_index_to_subindex;//copy of index_to_subindex data structure that acts as a map for matrix index to reduction submatrix indexing on CPU side
 #endif
 
-    //for GPU-scan
+    //for GPU-scan (finding apparent pairs)
     index_t* d_lowest_one_of_apparent_pair;//GPU copy of the lowest ones, d_lowest_one_of_apparent_pair[col]= lowest one row of column col
     //index_t* h_lowest_one_of_apparent_pair;//the lowest ones, d_lowest_one_of_apparent_pair[col]= lowest one row of column col
     struct index_t_pair_struct* d_pivot_array;//sorted array of all pivots, substitute for a structured hashmap with lookup done by log(n) binary search
@@ -2415,6 +2414,7 @@ void ripser<sparse_distance_matrix>::gpu_compute_dim_0_pairs(std::vector<struct 
     std::cerr<<"num cols to reduce: dim 1, "<<*h_num_columns_to_reduce<<std::endl;
 #endif
 }
+//finding apparent pairs
 template <>
 void ripser<compressed_lower_distance_matrix>::gpuscan(const index_t dim){
     //(need to sort for filtration order before gpuscan first, then apply gpu scan then sort again)
@@ -2508,6 +2508,7 @@ void ripser<compressed_lower_distance_matrix>::gpuscan(const index_t dim){
 #endif
 }
 
+//finding apparent pairs
 template <>
 void ripser<sparse_distance_matrix>::gpuscan(const index_t dim){
     //(need to sort for filtration order before gpuscan first, then apply gpu scan then sort again)
@@ -2975,7 +2976,7 @@ void ripser<compressed_lower_distance_matrix>::compute_barcodes() {
     if(gpu_dim_max>=1){
         std::cerr<<"max possible num simplices over all dim<=dim_max (without clearing) for memory allocation: "<<max_num_simplices_forall_dims<<std::endl;
 
-        CUDACHECK(cudaMalloc((void **) &d_columns_to_reduce, sizeof(struct diameter_index_t_struct) * max_num_simplices_forall_dims));//46000000
+        CUDACHECK(cudaMalloc((void **) &d_columns_to_reduce, sizeof(struct diameter_index_t_struct) * max_num_simplices_forall_dims));
         h_columns_to_reduce= (struct diameter_index_t_struct*) malloc(sizeof(struct diameter_index_t_struct)* max_num_simplices_forall_dims);
 
         if(h_columns_to_reduce==NULL){
@@ -3038,7 +3039,7 @@ void ripser<compressed_lower_distance_matrix>::compute_barcodes() {
     }
     sw.stop();
 #ifdef PROFILING
-    std::cerr<<"CUDA PREPROCESSING TIME (e.g. memory allocation): "<<sw.ms()/1000.0<<"s"<<std::endl;
+    std::cerr<<"CUDA PREPROCESSING TIME (e.g. memory allocation time): "<<sw.ms()/1000.0<<"s"<<std::endl;
 #endif
     sw.start();
 
@@ -3324,6 +3325,33 @@ template <typename T> T read(std::istream& s) {
     s.read(reinterpret_cast<char*>(&result), sizeof(T));
     return result; // on little endian: boost::endian::little_to_native(result);
 }
+compressed_lower_distance_matrix read_point_cloud_python(value_t* matrix, int num_rows, int num_columns){
+    std::vector<std::vector<value_t>> points;
+    for(int i= 0; i < num_rows; i++) {
+        std::vector <value_t> point;
+        for (int j= 0; j < num_columns; j++) {
+            point.push_back(matrix[i * num_columns + j]);
+        }
+        if (!point.empty()) {
+            points.push_back(point);
+        }
+        assert(point.size() == points.front().size());
+    }
+        //only l2 distance implemented so far
+        euclidean_distance_matrix eucl_dist(std::move(points));
+
+        index_t n= eucl_dist.size();
+
+        std::cout << "point cloud with " << n << " points in dimension "
+                  << eucl_dist.points.front().size() << std::endl;
+
+        std::vector<value_t> distances;
+
+        for (int i= 0; i < n; ++i)
+            for (int j= 0; j < i; ++j) distances.push_back(eucl_dist(i, j));
+
+        return compressed_lower_distance_matrix(std::move(distances));
+}
 
 compressed_lower_distance_matrix read_point_cloud(std::istream& input_stream) {
     std::vector<std::vector<value_t>> points;
@@ -3457,14 +3485,17 @@ compressed_lower_distance_matrix read_binary(std::istream& input_stream) {
     return compressed_lower_distance_matrix(std::move(distances));
 }
 
-compressed_lower_distance_matrix read_matrix_python(value_t* matrix, int matrix_length, file_format format) {
+compressed_lower_distance_matrix read_matrix_python(value_t* matrix, int num_entries, int num_rows, int num_columns, file_format format) {
     switch (format) {
         case LOWER_DISTANCE_MATRIX:
-            return read_lower_distance_matrix_python(matrix, matrix_length);
-        case DISTANCE_MATRIX:
-            return read_distance_matrix_python(matrix, matrix_length);
+            return read_lower_distance_matrix_python(matrix, num_entries);
+        case DISTANCE_MATRIX://assume that the distance matrix has been changed into lower_distance matrix format
+            return read_distance_matrix_python(matrix, num_entries);
+        case POINT_CLOUD:
+            return read_point_cloud_python(matrix, num_rows, num_columns);
     }
-    std::cerr<<"unsupported input file format"<<std::endl;
+    std::cerr<<"unsupported input file format for python interface"<<std::endl;
+    exit(-1);
 }
 
 compressed_lower_distance_matrix read_file(std::istream& input_stream, file_format format) {
@@ -3651,7 +3682,7 @@ extern "C" void run_main_filename(int argc,  char** argv, const char* filename) 
 #endif
 }
 
-extern "C" void run_main(int argc, char** argv, value_t* matrix, int matrix_length) {
+extern "C" void run_main(int argc, char** argv, value_t* matrix, int num_entries, int num_rows, int num_columns) {
 
     Stopwatch sw;
 #ifdef PROFILING
@@ -3717,7 +3748,7 @@ extern "C" void run_main(int argc, char** argv, value_t* matrix, int matrix_leng
         IOsw.start();
 
         std::ifstream file_stream(filename);
-        sparse_distance_matrix dist = read_sparse_distance_matrix(filename ? file_stream : std::cin);
+        sparse_distance_matrix dist= read_sparse_distance_matrix(filename ? file_stream : std::cin);
 
         IOsw.stop();
 #ifdef PROFILING
@@ -3730,14 +3761,14 @@ extern "C" void run_main(int argc, char** argv, value_t* matrix, int matrix_leng
 
         ripser<sparse_distance_matrix>(std::move(dist), dim_max, threshold, ratio)
                 .compute_barcodes();
-    }else {
+    }else{
         //Stopwatch IOsw;
         //IOsw.start();
-        compressed_lower_distance_matrix dist = read_matrix_python(matrix, matrix_length, format);
-
+        compressed_lower_distance_matrix dist= read_matrix_python(matrix, num_entries, num_rows, num_columns, format);
         //IOsw.stop();
+
 #ifdef PROFILING
-        //std::cerr<<IOsw.ms()/1000.0<<"s time to load python distance matrix"<<std::endl;
+        //std::cerr<<IOsw.ms()/1000.0<<"s time to load python matrix"<<std::endl;
         std::cerr<<"loaded python dense user matrix"<<std::endl;
 #endif
         value_t min= std::numeric_limits<value_t>::infinity(),

@@ -19,7 +19,8 @@ def run(args, data = None):
         printHelpAndExit("Printing help")
     file_format = "distance"
     file_name = ""
-    print(params)
+    print("\n------------RIPSER++ WITH PYTHON BINDINGS CALLED------------", sys.stderr)
+    #print(params)
     i = 0
     while i < len(params):
         if params[i] == "--format":
@@ -28,6 +29,7 @@ def run(args, data = None):
                 printHelpAndExit("Ripser++Python Error: No Format Specified")           
             else:
                 file_format = params[i+1]#don't cast this, we need it as a Python type
+                params[i+1]= ctypes.c_char_p(params[i+1].encode('utf-8'))
                 i += 2
                 continue
         elif params[i]=="--sparse":
@@ -78,7 +80,8 @@ def run(args, data = None):
     
     matrix = []
     if data is not None and isinstance(data, str):
-        file_name = data
+        #file_name = data
+        file_name= ctypes.c_char_p(data.encode('utf-8'))
         matrix = (ctypes.c_float * len(matrix))(*matrix)
     elif data is not None and isinstance(data, np.ndarray):
         matrix = data

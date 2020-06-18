@@ -43,8 +43,8 @@ def printHelpAndExit(msg):
     --sparse         force sparse computation
     --ratio <r>      only show persistence pairs with death/birth ratio > r
     '''
-    print(error_msg, sys.stderr)
-    quit()
+    #print(error_msg, sys.stderr)
+    raise Exception(error_msg)
 '''
 Searches the path and all its children for file named name
 '''
@@ -89,14 +89,13 @@ def Ripser_plusplus_Converter(prog, arguments, file_name, file_format, user_matr
     else:
 
         if file_format == "distance":
-            user_matrix = distance_matrix_user_matrix(user_matrix)
+            num_entries, num_rows, num_columns, user_matrix = distance_matrix_user_matrix(user_matrix)
 
         elif file_format == "lower-distance":
-            user_matrix = lower_distance_matrix_user_matrix(user_matrix)
+            num_entries, num_rows, num_columns, user_matrix = lower_distance_matrix_user_matrix(user_matrix)
 
-        elif file_format == "point-cloud": # only from file
-            point_cloud_user_matrix(user_matrix)
-            return
+        elif file_format == "point-cloud":
+            num_entries, num_rows, num_columns, user_matrix = point_cloud_user_matrix(user_matrix)
 
         elif file_format == "dipha": # only from file
             dipha_user_matrix(user_matrix)
@@ -124,10 +123,9 @@ def Ripser_plusplus_Converter(prog, arguments, file_name, file_format, user_matr
             printHelpAndExit("User Matrix was not created")
             return
 
-        length_of_user_matrix = len(user_matrix)
-        user_matrix = (ctypes.c_float * length_of_user_matrix)(*user_matrix)
+        user_matrix = (ctypes.c_float * num_entries)(*user_matrix)
 
-        prog.run_main(len(arguments), arguments, user_matrix, length_of_user_matrix)
+        prog.run_main(len(arguments), arguments, user_matrix, num_entries, num_rows, num_columns)
 
     return
 
@@ -138,9 +136,9 @@ user_vector -- entered user vector
 '''
 def checkVector(user_vector):
 
-    number_of_points = user_vector.size
-    quadratic_sol = (1 + math.sqrt(1 + 8 * number_of_points))/2
-    return quadratic_sol*(quadratic_sol-1)/2 == number_of_points
+    number_of_entries = user_vector.size
+    quadratic_sol = (1 + math.sqrt(1 + 8 * number_of_entries))/2
+    return quadratic_sol*(quadratic_sol-1)/2 == number_of_entries
 
 # User Matrices
 
@@ -159,10 +157,18 @@ def distance_matrix_user_matrix(user_matrix):
     if not (np.diagonal(user_matrix) == [0]).all():
         printHelpAndExit("All diagonals need to be 0 for the distance matrix.")
         return
-    
+
+    if len(user_matrix.shape)!=2:
+        printHelpAndExit("Distance matrix must be an actual 2-d matrix")
+        return
+
     # Get lower triangular matrix (not including the 0s)
     indices = np.tril_indices(user_matrix.shape[0], -1)
 
+    num_rows, num_columns = user_matrix.shape
+    if num_rows != num_columns:
+        printHelpAndExit("Distance matrix must be square")
+        return
     # Now convert to vector
     user_matrix = user_matrix[indices]
 
@@ -170,9 +176,11 @@ def distance_matrix_user_matrix(user_matrix):
     check = checkVector(user_matrix)
     if not check:
         printHelpAndExit("User matrix not under the size constraint, number_of_elements = quadratic_solution * (quadratic_solution-1)/2, where quadratic_solution = (1 + sqrt(1 + 8 * number_of_elements))/2")
-        return   
+        return
 
-    return user_matrix.flatten()
+    num_entries= len(user_matrix)
+
+    return num_entries, num_rows, num_columns, user_matrix
 
 '''
 Runs ripser++ with lower-distance setting using user_matrix
@@ -180,14 +188,12 @@ user_matrix -- entered user matrix
 '''
 def lower_distance_matrix_user_matrix(user_matrix):
 
-
     user_matrix_dimensions = user_matrix.shape
     # Check whether it is a row/column vector
     #if not(len(user_matrix_dimensions) == 1 or user_matrix_dimensions[0] == 1 or user_matrix_dimensions[1] == 1):
     if(len(user_matrix_dimensions)!=1):
         printHelpAndExit("Lower Distance Matrix only supports a vector\n")
         return
-    
     user_matrix = user_matrix.reshape((1,user_matrix.size))
 
     # Check size
@@ -195,16 +201,25 @@ def lower_distance_matrix_user_matrix(user_matrix):
     if not check:
         printHelpAndExit("Vector not under the size constraint, number_of_elements = quadratic_solution * (quadratic_solution-1)/2, where quadratic_solution = (1 + sqrt(1 + 8 * number_of_elements))/2")
         return
-
-    return user_matrix.flatten()
+    user_matrix = user_matrix.ravel()
+    num_entries = len(user_matrix)
+    num_rows = ctypes.c_int(int((1 + math.sqrt(1 + 8 * num_entries))/2))
+    num_columns = num_rows
+    return num_entries, num_rows, num_columns, user_matrix
 
 '''
 Runs ripser++ with point_cloud setting using user_matrix
 user_matrix -- entered user matrix
 '''
 def point_cloud_user_matrix(user_matrix):
-    printHelpAndExit("Currently point-cloud user matrix is not supported, please load using a file name.")
-    return
+    #printHelpAndExit("Currently point-cloud user matrix is not supported, please load using a file name.")
+    num_rows, num_columns= user_matrix.shape
+    user_matrix= user_matrix.ravel()
+    num_entries= len(user_matrix)
+    if(num_entries==0):
+        printHelpAndExit("point-cloud needs at least one point")
+        return
+    return num_entries, num_rows, num_columns, user_matrix
     
 
 '''

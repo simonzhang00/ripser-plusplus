@@ -8,8 +8,10 @@ import numpy as np
 import os
 
 ##
-## Contains set examples to run the python binding for ripser++
+## Contains a set of examples to run the python binding for ripser++
 ##
+
+np.random.seed(1)
 
 ############################################
 ################ FILE NAME ################
@@ -106,6 +108,14 @@ rpp_py.run("--format distance", np.array([[0,3,2],[3,0,1],[2,1,0]]))
 POINT-CLOUD MATRIX - USER MATRIX
 '''
 #print("POINT-CLOUD MATRIX - USER MATRIX - Currently not available", sys.stderr)
+num_pnts= 10
+pnt_dimension= 100
+rand_point_cloud= np.random.random((num_pnts, pnt_dimension))
+rpp_py.run("--format point-cloud", rand_point_cloud)
+rpp_py.run("--format point-cloud", np.array([[1,2,3]]))
+rpp_py.run("--format point-cloud", np.array([[1],[2],[3]]))
+
+rpp_py.run("--format distance", np.array([[0]]))
 
 '''
 DIPHA MATRIX - USER MATRIX

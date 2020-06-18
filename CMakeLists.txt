@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.2)
 project(ripser++)
 
+#for Ubuntu users, see: https://github.com/espressomd/espresso/issues/3654 for lowering the gcc version for compatibility with CUDA
 find_package(CUDA 7 REQUIRED)
 
 #set(CMAKE_BUILD_TYPE "Debug")

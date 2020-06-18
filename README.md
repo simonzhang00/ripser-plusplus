@@ -22,14 +22,16 @@ Dependencies:
 
 3. Make sure GCC is installed at the correct version (e.g. GCC 7.3.0).
     Note: If you turn on the preprocessor directive: `#define CPUONLY_SPARSE_HASHMAP`, then you must lower your GCC version to 7.3.0.
-
+    For CUDA versions higher than 10, GCC must be lowered to atmost 8.
 4. A Linux operating system is needed.
 
 Ripser++ is intended to run on high performance computing systems.
 
-Thus, a GPU with enough device memory is needed to run large datasets. (e.g. Tesla V100 GPU with 32GB device DRAM). If the system's GPU is not compatible, or the system does not have a GPU, error messages will appear.
+Thus, a GPU with enough device memory is needed to run large datasets. (e.g. Tesla V100 GPU with 32GB device DRAM). If the system's GPU is not compatible, or the system does not have a GPU, error messages will appear. 
 
-Furthermore, it is also preferable to have a multicore processor (e.g. >= 28 cores) for high performance, and a large amount of DRAM is required for large datasets. We have tested on a 100 GB DRAM single computing node with 28 cores.
+You do not have to have a super computer, however. On my $900 dollar laptop with a 6GB device memory NVIDIA GPU, I was able to run the sphere_3_192 dataset to dimension 3 computation with a 15x speedup over Ripser. 
+
+It is also preferable to have a multicore processor (e.g. >= 28 cores) for high performance, and a large amount of DRAM is required for large datasets. We have tested on a 100 GB DRAM single computing node with 28 cores.
 
 Under a Linux Operating System, type the following commands:
 
