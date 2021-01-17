@@ -7,7 +7,24 @@ import sys
 import re
 import os
 
-
+class Birth_death_coordinate(ctypes.Structure):
+    """
+    Replica of datatype for bacrode from cuda
+    """
+    pass
+    _fields_ = [("birth",ctypes.c_float),("death",ctypes.c_float)]
+class Set_of_barcodes(ctypes.Structure):
+    """
+    Replica of datatype for bacrode from cuda
+    """
+    pass
+    _fields_ = [("num_barcodes",ctypes.c_int64),("barcodes",ctypes.POINTER(Birth_death_coordinate))]
+class Ripser_plusplus_result(ctypes.Structure):
+    """
+    Replica of datatype for result from cuda
+    """
+    pass
+    _fields_ = [("num_dimensions",ctypes.c_int64), ("set_of_barcodes",ctypes.POINTER(Set_of_barcodes))]
 '''
 Prints out the error message and quits the program.
 msg -- Custom error message to show the user
@@ -71,10 +88,16 @@ def Ripser_plusplus_Converter(prog, arguments, file_name, file_format, user_matr
     # Read from file if not given
     if user_matrix is None:
         if file_format in matrix_formats:
-
-            prog.run_main_filename(len(arguments), arguments, file_name)
             
-            return
+
+            prog.run_main_filename.restype = Ripser_plusplus_result
+            res = prog.run_main_filename(len(arguments), arguments, file_name)
+
+            barcodes_dict = {}
+
+            for dim in range(res.num_dimensions):
+                barcodes_dict[dim] = np.array([np.array(res.set_of_barcodes[dim].barcodes[coord]) for coord in range(res.set_of_barcodes[dim].num_barcodes)])
+            return barcodes_dict
         else:
 
             printHelpAndExit("Unknown file format. Please use one of the following\n" +

@@ -111,4 +111,5 @@ def run(args, data = None):
                 printHelpAndExit("Could not locate libpyripser++.so file, please check README.md for details.")
 
     # Running python binding
-    Ripser_plusplus_Converter(prog, arguments, file_name, file_format, matrix)
+    barcodes_dict = Ripser_plusplus_Converter(prog, arguments, file_name, file_format, matrix)
+    return barcodes_dict

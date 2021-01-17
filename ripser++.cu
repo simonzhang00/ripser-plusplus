@@ -153,6 +153,24 @@ struct index_t_pair_struct{//data type for a pivot in the coboundary matrix: (ro
     index_t column_idx;
 };
 
+typedef struct {
+    value_t birth;
+    value_t death;
+} birth_death_coordinate;
+typedef struct{
+    index_t num_barcodes;
+    birth_death_coordinate* barcodes;
+} set_of_barcodes;
+typedef struct{
+    int num_dimensions;
+    set_of_barcodes* all_barcodes;
+} ripser_plusplus_result;
+
+ripser_plusplus_result res;
+
+
+std::vector<std::vector<birth_death_coordinate>> list_of_barcodes = std::vector<std::vector<birth_death_coordinate>>();
+
 struct row_cidx_column_idx_struct_compare{
     __host__ __device__ bool operator()(struct index_t_pair_struct a, struct index_t_pair_struct b){
         //return a.row_cidx!=b.row_cidx ? a.row_cidx<b.row_cidx : a.column_idx<b.column_idx;//the second condition should never happen if sorting pivot pairs since pivots do not conflict on rows or columns
@@ -1820,6 +1838,10 @@ public:
 #ifdef PRINT_PERSISTENCE_PAIRS
                 if(e.diameter!=0) {
                     std::cout << " [0," << e.diameter << ")" << std::endl;
+                    
+                    //Collect persistence pair
+                    birth_death_coordinate barcode = {0,e.diameter};
+                    list_of_barcodes[0].push_back(barcode);
                 }
 #endif
                 dset.link(u, v);
@@ -1997,6 +2019,9 @@ public:
 #endif
                             std::cout << " [" << diameter << "," << death << ")" << std::endl
                                       << std::flush;
+
+                            birth_death_coordinate barcode = {diameter,death};
+                            list_of_barcodes[dim].push_back(barcode);
                         }
 #endif
                         pivot_column_index[pivot.index]= index_column_to_reduce;
@@ -2090,6 +2115,9 @@ public:
 #endif
                             std::cout << " [" << diameter << "," << death << ")" << std::endl
                                       << std::flush;
+
+                            birth_death_coordinate barcode = {diameter,death};
+                            list_of_barcodes[dim].push_back(barcode);
                         }
 #endif
 
@@ -2313,6 +2341,9 @@ void ripser<compressed_lower_distance_matrix>::gpu_compute_dim_0_pairs(std::vect
             //remove paired destroyer columns (we compute cohomology)
             if(e.diameter!=0) {
                 std::cout << " [0," << e.diameter << ")" << std::endl;
+
+                birth_death_coordinate barcode = {0,e.diameter};
+                list_of_barcodes[0].push_back(barcode);
             }
 #endif
             dset.link(u, v);
@@ -2391,6 +2422,9 @@ void ripser<sparse_distance_matrix>::gpu_compute_dim_0_pairs(std::vector<struct 
 #ifdef PRINT_PERSISTENCE_PAIRS
             if(e.diameter!=0) {
                 std::cout << " [0," << e.diameter << ")" << std::endl;
+
+                birth_death_coordinate barcode = {0,e.diameter};
+                list_of_barcodes[0].push_back(barcode);
             }
 #endif
             dset.link(u, v);
@@ -3543,10 +3577,11 @@ void print_usage_and_exit(int exit_code) {
     exit(exit_code);
 }
 
-
-extern "C" void run_main_filename(int argc,  char** argv, const char* filename) {
+extern "C" ripser_plusplus_result run_main_filename(int argc,  char** argv, const char* filename) {
 
     Stopwatch sw;
+    
+
 #ifdef PROFILING
     cudaDeviceProp deviceProp;
     size_t freeMem_start, freeMem_end, totalMemory;
@@ -3563,6 +3598,7 @@ extern "C" void run_main_filename(int argc,  char** argv, const char* filename) 
     float ratio= 1;
 
     bool use_sparse= false;
+    
 
     for (index_t i= 0; i < argc; i++) {
         const std::string arg(argv[i]);
@@ -3602,6 +3638,11 @@ extern "C" void run_main_filename(int argc,  char** argv, const char* filename) 
         } else if(arg=="--sparse") {
             use_sparse= true;
         }
+    }
+
+    list_of_barcodes = std::vector<std::vector<birth_death_coordinate>>();
+    for(index_t i = 0; i <= dim_max; i++){
+        list_of_barcodes.push_back(std::vector<birth_death_coordinate>());
     }
 
     std::ifstream file_stream(filename);
@@ -3656,6 +3697,8 @@ extern "C" void run_main_filename(int argc,  char** argv, const char* filename) 
 
         std::cout << "value range: [" << min << "," << max_finite << "]" << std::endl;
 
+        
+
         if (use_sparse) {
 
             std::cout << "sparse distance matrix with " << dist.size() << " points and "
@@ -3680,9 +3723,24 @@ extern "C" void run_main_filename(int argc,  char** argv, const char* filename) 
 
     std::cerr<<"total GPU memory used: "<<(freeMem_start-freeMem_end)/1000.0/1000.0/1000.0<<"GB"<<std::endl;
 #endif
+
+    set_of_barcodes* collected_barcodes = (set_of_barcodes*)malloc(sizeof(set_of_barcodes) * list_of_barcodes.size());
+    for(index_t i = 0; i < list_of_barcodes.size();i++){
+        birth_death_coordinate* barcode_array = (birth_death_coordinate*)malloc(sizeof(birth_death_coordinate) * list_of_barcodes[i].size());
+        
+        index_t j;
+        for(j = 0; j < list_of_barcodes[i].size(); j++){
+            barcode_array[j] = list_of_barcodes[i][j];
+        }
+        collected_barcodes[i] = {j,barcode_array};
+    }
+    
+    res = {dim_max + 1,collected_barcodes};
+
+    return res;
 }
 
-extern "C" void run_main(int argc, char** argv, value_t* matrix, int num_entries, int num_rows, int num_columns) {
+extern "C" ripser_plusplus_result run_main(int argc, char** argv, value_t* matrix, int num_entries, int num_rows, int num_columns) {
 
     Stopwatch sw;
 #ifdef PROFILING
@@ -3741,6 +3799,11 @@ extern "C" void run_main(int argc, char** argv, value_t* matrix, int num_entries
         } else if(arg=="--sparse") {
             use_sparse= true;
         }
+    }
+
+    list_of_barcodes = std::vector<std::vector<birth_death_coordinate>>();
+    for(index_t i = 0; i <= dim_max; i++){
+        list_of_barcodes.push_back(std::vector<birth_death_coordinate>());
     }
 
     if (format == SPARSE) {//this branch is currently unsupported in run_main, see run_main_filename() instead
@@ -3817,6 +3880,20 @@ extern "C" void run_main(int argc, char** argv, value_t* matrix, int num_entries
 
     std::cerr<<"total GPU memory used: "<<(freeMem_start-freeMem_end)/1000.0/1000.0/1000.0<<"GB"<<std::endl;
 #endif
+
+    set_of_barcodes* collected_barcodes = (set_of_barcodes*)malloc(sizeof(set_of_barcodes) * list_of_barcodes.size());
+    for(index_t i = 0; i < list_of_barcodes.size();i++){
+        birth_death_coordinate* barcode_array = (birth_death_coordinate*)malloc(sizeof(birth_death_coordinate) * list_of_barcodes[i].size());
+    
+        index_t j;
+        for(j = 0; j < list_of_barcodes[i].size(); j++){
+            barcode_array[j] = list_of_barcodes[i][j];
+        }
+        collected_barcodes[i] = {j,barcode_array};
+    }
+    res = {dim_max,collected_barcodes};
+
+    return res;
 }
 
 int main(int argc, char** argv) {
@@ -3881,6 +3958,11 @@ int main(int argc, char** argv) {
             if (filename) { print_usage_and_exit(-1); }
             filename= argv[i];
         }
+    }
+
+    list_of_barcodes = std::vector<std::vector<birth_death_coordinate>>();
+    for(index_t i = 0; i <= dim_max; i++){
+        list_of_barcodes.push_back(std::vector<birth_death_coordinate>());
     }
 
     std::ifstream file_stream(filename);
