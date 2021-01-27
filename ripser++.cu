@@ -55,7 +55,7 @@
 #define PROFILING
 #define COUNTING
 #define USE_PHASHMAP//www.github.com/greg7mdp/parallel-hashmap
-
+#define PYTHON_BARCODE_COLLECTION
 #ifndef USE_PHASHMAP
 #define USE_GOOGLE_HASHMAP
 #endif
@@ -1835,10 +1835,11 @@ public:
             index_t u= dset.find(vertices_of_edge[0]), v= dset.find(vertices_of_edge[1]);
 
             if (u != v) {
-#ifdef PRINT_PERSISTENCE_PAIRS
+#if defined(PRINT_PERSISTENCE_PAIRS) || defined(PYTHON_BARCODE_COLLECTION)
                 if(e.diameter!=0) {
+#ifdef PRINT_PERSISTENCE_PAIRS
                     std::cout << " [0," << e.diameter << ")" << std::endl;
-                    
+#endif
                     //Collect persistence pair
                     birth_death_coordinate barcode = {0,e.diameter};
                     list_of_barcodes[0].push_back(barcode);
@@ -2011,15 +2012,16 @@ public:
                         pivot= get_pivot(working_coboundary);
 #endif
                     } else {
-#ifdef PRINT_PERSISTENCE_PAIRS
+#if defined(PRINT_PERSISTENCE_PAIRS) || defined(PYTHON_BARCODE_COLLECTION)
                         value_t death= pivot.diameter;
                         if (death > diameter * ratio) {
 #ifdef INDICATE_PROGRESS
                             std::cerr << "\033[K";
 #endif
+#ifdef PRINT_PERSISTENCE_PAIRS
                             std::cout << " [" << diameter << "," << death << ")" << std::endl
                                       << std::flush;
-
+#endif
                             birth_death_coordinate barcode = {diameter,death};
                             list_of_barcodes[dim].push_back(barcode);
                         }
@@ -2107,15 +2109,17 @@ public:
 #endif
 
                     }else{
-#ifdef PRINT_PERSISTENCE_PAIRS
+#if defined(PRINT_PERSISTENCE_PAIRS) || defined(PYTHON_BARCODE_COLLECTION) 
                         value_t death= pivot.diameter;
                         if (death > diameter * ratio) {
 #ifdef INDICATE_PROGRESS
                             std::cerr << clear_line << std::flush;
 #endif
+
+#ifdef PRINT_PERSISTENCE_PAIRS
                             std::cout << " [" << diameter << "," << death << ")" << std::endl
                                       << std::flush;
-
+#endif
                             birth_death_coordinate barcode = {diameter,death};
                             list_of_barcodes[dim].push_back(barcode);
                         }
@@ -2337,11 +2341,12 @@ void ripser<compressed_lower_distance_matrix>::gpu_compute_dim_0_pairs(std::vect
         index_t u= dset.find(vertices_of_edge[0]), v= dset.find(vertices_of_edge[1]);
 
         if (u != v) {
-#ifdef PRINT_PERSISTENCE_PAIRS
+#if defined(PRINT_PERSISTENCE_PAIRS) || defined(PYTHON_BARCODE_COLLECTION)
             //remove paired destroyer columns (we compute cohomology)
             if(e.diameter!=0) {
+#ifdef PRINT_PERSISTENCE_PAIRS
                 std::cout << " [0," << e.diameter << ")" << std::endl;
-
+#endif
                 birth_death_coordinate barcode = {0,e.diameter};
                 list_of_barcodes[0].push_back(barcode);
             }
@@ -2419,10 +2424,11 @@ void ripser<sparse_distance_matrix>::gpu_compute_dim_0_pairs(std::vector<struct 
         index_t u= dset.find(vertices_of_edge[0]), v= dset.find(vertices_of_edge[1]);
 
         if (u != v) {
-#ifdef PRINT_PERSISTENCE_PAIRS
+#if defined(PRINT_PERSISTENCE_PAIRS) || defined(PYTHON_BARCODE_COLLECTION)
             if(e.diameter!=0) {
+#ifdef PRINT_PERSISTENCE_PAIRS
                 std::cout << " [0," << e.diameter << ")" << std::endl;
-
+#endif
                 birth_death_coordinate barcode = {0,e.diameter};
                 list_of_barcodes[0].push_back(barcode);
             }
@@ -3446,7 +3452,31 @@ sparse_distance_matrix read_sparse_distance_matrix(std::istream& input_stream) {
 
     return sparse_distance_matrix(std::move(neighbors), num_edges);
 }
+sparse_distance_matrix read_sparse_distance_matrix_python(value_t* matrix, int matrix_length){
+    std::vector<std::vector<index_diameter_t_struct>> neighbors;
+    index_t num_edges= 0;
 
+    for(index_t k = 0; k < matrix_length; k+=3){
+        size_t i, j;
+        value_t value;
+        i = matrix[k];
+        j = matrix[k+1];
+        value = matrix[k+2];
+        if (i != j) {
+            neighbors.resize(std::max({neighbors.size(), i + 1, j + 1}));
+            neighbors[i].push_back({j, value});
+            neighbors[j].push_back({i, value});
+            ++num_edges;
+        }
+    }
+
+    struct lowerindex_lowerdiameter_index_t_struct_compare cmp_index_diameter;
+
+    for (size_t i= 0; i < neighbors.size(); ++i)
+        std::sort(neighbors[i].begin(), neighbors[i].end(), cmp_index_diameter);
+
+    return sparse_distance_matrix(std::move(neighbors), num_edges);
+}
 compressed_lower_distance_matrix read_lower_distance_matrix_python(value_t* matrix, int matrix_length) {
 
     std::vector<value_t> distances(matrix, matrix + matrix_length);
@@ -3790,8 +3820,10 @@ extern "C" ripser_plusplus_result run_main(int argc, char** argv, value_t* matri
                 format= POINT_CLOUD;
             else if (parameter == "dipha")
                 format= DIPHA;
-            else if (parameter == "sparse")
+            else if (parameter == "sparse") {
                 format= SPARSE;
+                use_sparse = true;
+            }
             else if (parameter == "binary")
                 format= BINARY;
             else
@@ -3810,8 +3842,8 @@ extern "C" ripser_plusplus_result run_main(int argc, char** argv, value_t* matri
         Stopwatch IOsw;
         IOsw.start();
 
-        std::ifstream file_stream(filename);
-        sparse_distance_matrix dist= read_sparse_distance_matrix(filename ? file_stream : std::cin);
+        
+        sparse_distance_matrix dist= read_sparse_distance_matrix_python(matrix,num_entries);
 
         IOsw.stop();
 #ifdef PROFILING
@@ -3891,7 +3923,8 @@ extern "C" ripser_plusplus_result run_main(int argc, char** argv, value_t* matri
         }
         collected_barcodes[i] = {j,barcode_array};
     }
-    res = {dim_max,collected_barcodes};
+
+    res = {dim_max + 1,collected_barcodes};
 
     return res;
 }

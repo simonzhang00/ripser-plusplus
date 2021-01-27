@@ -16,3 +16,4 @@ file_name_or_matrix = "../../examples/sphere_3_192.distance_matrix.lower_triangu
 barcodes_dict = rpp_py.run(args, file_name_or_matrix)
 
 print(barcodes_dict)
+

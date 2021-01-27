@@ -1,6 +1,7 @@
 
 from __future__ import print_function
 import numpy as np
+import scipy.sparse as sps
 import ctypes
 import math
 import sys
@@ -130,8 +131,7 @@ def Ripser_plusplus_Converter(prog, arguments, file_name, file_format, user_matr
             return
 
         elif file_format == "sparse": # only from file
-            binary_user_matrix(user_matrix)
-            return
+            num_entries, num_rows, num_columns, user_matrix = sparse_user_matrix(user_matrix)
 
         else:
             printHelpAndExit("Unknown file format. Please use one of the following\n" +
@@ -149,7 +149,16 @@ def Ripser_plusplus_Converter(prog, arguments, file_name, file_format, user_matr
 
         user_matrix = (ctypes.c_float * num_entries)(*user_matrix)
 
-        prog.run_main(len(arguments), arguments, user_matrix, num_entries, num_rows, num_columns)
+        prog.run_main.restype = Ripser_plusplus_result
+
+        barcodes_dict = {}
+
+        res = prog.run_main(len(arguments), arguments, user_matrix, num_entries, num_rows, num_columns)
+
+        for dim in range(res.num_dimensions):
+            barcodes_dict[dim] = np.array([np.array(res.set_of_barcodes[dim].barcodes[coord]) for coord in range(res.set_of_barcodes[dim].num_barcodes)])
+        return barcodes_dict
+        
 
     return
 
@@ -268,5 +277,13 @@ Runs ripser++ with sparse setting using user_matrix
 file_name -- user file name
 '''
 def sparse_user_matrix(user_matrix):
-    printHelpAndExit("Currently Sparse user matrix is not supported, please load using a file name.")
-    return
+    user_matrix = sps.coo_matrix(user_matrix)
+    num_rows, num_columns = user_matrix.shape
+    user_matrix = np.array([value for pair in zip(user_matrix.row,user_matrix.col,user_matrix.data) for value in pair])
+    num_entries = len(user_matrix)
+
+    if(num_entries == 0):
+        printHelpAndExit("Sparse matrix needs at least one entry")
+        return
+    
+    return num_entries, num_rows, num_columns, user_matrix
