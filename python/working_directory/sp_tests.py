@@ -29,19 +29,8 @@ SPARSE-DISTANCE MATRIX - READ FROM PYTHON
 '''
 print("SPARSE-DISTANCE MATRIX - READ FROM PYTHON", sys.stderr)
 args = "--dim 1 --format sparse --threshold 5"
-file_name_or_matrix = arr
+file_name_or_matrix = mtx
 barcodes_dict = rpp_py.run(args, file_name_or_matrix)
 
 print(barcodes_dict)
 
-
-
-'''
-SPARSE-DISTANCE MATRIX 2 - READ FROM PYTHON
-'''
-print("SPARSE-DISTANCE MATRIX 2 - READ FROM PYTHON", sys.stderr)
-args = "--dim 1 --format sparse --threshold 5"
-file_name_or_matrix = arr
-barcodes_dict = rpp_py.run(args, file_name_or_matrix)
-
-print(barcodes_dict)

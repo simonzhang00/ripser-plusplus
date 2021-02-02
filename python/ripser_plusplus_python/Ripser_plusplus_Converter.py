@@ -81,8 +81,11 @@ user_matrix -- Entered user matrix, either a vector or a matrix with at least 2 
 '''
 def Ripser_plusplus_Converter(prog, arguments, file_name, file_format, user_matrix = None):
 
-    if len(user_matrix) == 0:
+    if isinstance(user_matrix,np.ndarray) and len(user_matrix) == 0:
         user_matrix = None
+    elif isinstance(user_matrix, sps.coo_matrix) and sps.coo_matrix.getnnz(user_matrix) == 0:
+        user_matrix = None
+ 
 
     matrix_formats = ["distance", "lower-distance", "point-cloud", "sparse", "dipha", "binary"]
 
@@ -277,7 +280,6 @@ Runs ripser++ with sparse setting using user_matrix
 file_name -- user file name
 '''
 def sparse_user_matrix(user_matrix):
-    user_matrix = sps.coo_matrix(user_matrix)
     num_rows, num_columns = user_matrix.shape
     user_matrix = np.array([value for pair in zip(user_matrix.row,user_matrix.col,user_matrix.data) for value in pair])
     num_entries = len(user_matrix)
