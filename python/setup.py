@@ -7,7 +7,7 @@ import re
 import os
 from setuptools import find_packages, setup
 
-DEPENDENCIES = ['numpy']
+DEPENDENCIES = ['numpy','scipy']
 CURDIR = os.path.abspath(os.path.dirname(__file__))
 
 with io.open(os.path.join(CURDIR, "README.md"), "r", encoding="utf-8") as f:

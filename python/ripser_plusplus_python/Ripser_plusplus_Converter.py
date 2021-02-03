@@ -13,7 +13,7 @@ class Birth_death_coordinate(ctypes.Structure):
     Replica of datatype for bacrode from cuda
     """
     pass
-    _fields_ = [("birth",ctypes.c_float),("death",ctypes.c_float)]
+    _fields_ = [("index",ctypes.c_int64),("birth",ctypes.c_float),("death",ctypes.c_float)]
 class Set_of_barcodes(ctypes.Structure):
     """
     Replica of datatype for bacrode from cuda
@@ -277,7 +277,7 @@ def binary_user_matrix(user_matrix):
 
 '''
 Runs ripser++ with sparse setting using user_matrix
-file_name -- user file name
+user_matrix -- entered user matrix
 '''
 def sparse_user_matrix(user_matrix):
     num_rows, num_columns = user_matrix.shape
