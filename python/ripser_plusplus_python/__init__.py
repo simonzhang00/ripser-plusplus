@@ -4,6 +4,7 @@ import sys
 from .Ripser_plusplus_Converter import Ripser_plusplus_Converter, printHelpAndExit
 from .Ripser_plusplus_Converter import find
 import numpy as np
+import scipy.sparse as sps
 import os
 
 '''
@@ -82,8 +83,11 @@ def run(args, data = None):
     if data is not None and isinstance(data, str):
         #file_name = data
         file_name= ctypes.c_char_p(data.encode('utf-8'))
-        matrix = (ctypes.c_float * len(matrix))(*matrix)
+        #matrix = (ctypes.c_float * len(matrix))(*matrix)
+        matrix = None   
     elif data is not None and isinstance(data, np.ndarray):
+        matrix = data
+    elif data is not None and isinstance(data,sps.coo_matrix):
         matrix = data
     else:
         printHelpAndExit("Ripser++Python Error: Second argument must either be a string for file name, or a numpy array for input data")
@@ -111,4 +115,5 @@ def run(args, data = None):
                 printHelpAndExit("Could not locate libpyripser++.so file, please check README.md for details.")
 
     # Running python binding
-    Ripser_plusplus_Converter(prog, arguments, file_name, file_format, matrix)
+    barcodes_dict = Ripser_plusplus_Converter(prog, arguments, file_name, file_format, matrix)
+    return barcodes_dict

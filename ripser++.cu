@@ -49,13 +49,13 @@
     } while(0)
 
 //#define INDICATE_PROGRESS//DO NOT UNCOMMENT THIS IF YOU WANT TO LOG PROFILING NUMBERS FROM stderr TO FILE
-#define PRINT_PERSISTENCE_PAIRS//print out all persistence paris to stdout
+//#define PRINT_PERSISTENCE_PAIRS//print out all persistence paris to stdout
 //#define CPUONLY_ASSEMBLE_REDUCTION_MATRIX//do full matrix reduction on CPU with the sparse coefficient matrix V
 //#define ASSEMBLE_REDUCTION_SUBMATRIX//do submatrix reduction with the sparse coefficient submatrix of V
-#define PROFILING
-#define COUNTING
+//#define PROFILING
+//#define COUNTING
 #define USE_PHASHMAP//www.github.com/greg7mdp/parallel-hashmap
-
+#define PYTHON_BARCODE_COLLECTION
 #ifndef USE_PHASHMAP
 #define USE_GOOGLE_HASHMAP
 #endif
@@ -152,6 +152,24 @@ struct index_t_pair_struct{//data type for a pivot in the coboundary matrix: (ro
     index_t row_cidx;
     index_t column_idx;
 };
+
+typedef struct {
+    value_t birth;
+    value_t death;
+} birth_death_coordinate;
+typedef struct{
+    index_t num_barcodes;
+    birth_death_coordinate* barcodes;
+} set_of_barcodes;
+typedef struct{
+    int num_dimensions;
+    set_of_barcodes* all_barcodes;
+} ripser_plusplus_result;
+
+ripser_plusplus_result res;
+
+
+std::vector<std::vector<birth_death_coordinate>> list_of_barcodes = std::vector<std::vector<birth_death_coordinate>>();
 
 struct row_cidx_column_idx_struct_compare{
     __host__ __device__ bool operator()(struct index_t_pair_struct a, struct index_t_pair_struct b){
@@ -1817,9 +1835,14 @@ public:
             index_t u= dset.find(vertices_of_edge[0]), v= dset.find(vertices_of_edge[1]);
 
             if (u != v) {
-#ifdef PRINT_PERSISTENCE_PAIRS
+#if defined(PRINT_PERSISTENCE_PAIRS) || defined(PYTHON_BARCODE_COLLECTION)
                 if(e.diameter!=0) {
+#ifdef PRINT_PERSISTENCE_PAIRS
                     std::cout << " [0," << e.diameter << ")" << std::endl;
+#endif
+                    //Collect persistence pair
+                    birth_death_coordinate barcode = {0,e.diameter};
+                    list_of_barcodes[0].push_back(barcode);
                 }
 #endif
                 dset.link(u, v);
@@ -1989,14 +2012,18 @@ public:
                         pivot= get_pivot(working_coboundary);
 #endif
                     } else {
-#ifdef PRINT_PERSISTENCE_PAIRS
+#if defined(PRINT_PERSISTENCE_PAIRS) || defined(PYTHON_BARCODE_COLLECTION)
                         value_t death= pivot.diameter;
                         if (death > diameter * ratio) {
 #ifdef INDICATE_PROGRESS
                             std::cerr << "\033[K";
 #endif
+#ifdef PRINT_PERSISTENCE_PAIRS
                             std::cout << " [" << diameter << "," << death << ")" << std::endl
                                       << std::flush;
+#endif
+                            birth_death_coordinate barcode = {diameter,death};
+                            list_of_barcodes[dim].push_back(barcode);
                         }
 #endif
                         pivot_column_index[pivot.index]= index_column_to_reduce;
@@ -2082,14 +2109,19 @@ public:
 #endif
 
                     }else{
-#ifdef PRINT_PERSISTENCE_PAIRS
+#if defined(PRINT_PERSISTENCE_PAIRS) || defined(PYTHON_BARCODE_COLLECTION) 
                         value_t death= pivot.diameter;
                         if (death > diameter * ratio) {
 #ifdef INDICATE_PROGRESS
                             std::cerr << clear_line << std::flush;
 #endif
+
+#ifdef PRINT_PERSISTENCE_PAIRS
                             std::cout << " [" << diameter << "," << death << ")" << std::endl
                                       << std::flush;
+#endif
+                            birth_death_coordinate barcode = {diameter,death};
+                            list_of_barcodes[dim].push_back(barcode);
                         }
 #endif
 
@@ -2309,10 +2341,14 @@ void ripser<compressed_lower_distance_matrix>::gpu_compute_dim_0_pairs(std::vect
         index_t u= dset.find(vertices_of_edge[0]), v= dset.find(vertices_of_edge[1]);
 
         if (u != v) {
-#ifdef PRINT_PERSISTENCE_PAIRS
+#if defined(PRINT_PERSISTENCE_PAIRS) || defined(PYTHON_BARCODE_COLLECTION)
             //remove paired destroyer columns (we compute cohomology)
             if(e.diameter!=0) {
+#ifdef PRINT_PERSISTENCE_PAIRS
                 std::cout << " [0," << e.diameter << ")" << std::endl;
+#endif
+                birth_death_coordinate barcode = {0,e.diameter};
+                list_of_barcodes[0].push_back(barcode);
             }
 #endif
             dset.link(u, v);
@@ -2388,9 +2424,13 @@ void ripser<sparse_distance_matrix>::gpu_compute_dim_0_pairs(std::vector<struct 
         index_t u= dset.find(vertices_of_edge[0]), v= dset.find(vertices_of_edge[1]);
 
         if (u != v) {
-#ifdef PRINT_PERSISTENCE_PAIRS
+#if defined(PRINT_PERSISTENCE_PAIRS) || defined(PYTHON_BARCODE_COLLECTION)
             if(e.diameter!=0) {
+#ifdef PRINT_PERSISTENCE_PAIRS
                 std::cout << " [0," << e.diameter << ")" << std::endl;
+#endif
+                birth_death_coordinate barcode = {0,e.diameter};
+                list_of_barcodes[0].push_back(barcode);
             }
 #endif
             dset.link(u, v);
@@ -3412,7 +3452,31 @@ sparse_distance_matrix read_sparse_distance_matrix(std::istream& input_stream) {
 
     return sparse_distance_matrix(std::move(neighbors), num_edges);
 }
+sparse_distance_matrix read_sparse_distance_matrix_python(value_t* matrix, int matrix_length){
+    std::vector<std::vector<index_diameter_t_struct>> neighbors;
+    index_t num_edges= 0;
 
+    for(index_t k = 0; k < matrix_length; k+=3){
+        size_t i, j;
+        value_t value;
+        i = matrix[k];
+        j = matrix[k+1];
+        value = matrix[k+2];
+        if (i != j) {
+            neighbors.resize(std::max({neighbors.size(), i + 1, j + 1}));
+            neighbors[i].push_back({j, value});
+            neighbors[j].push_back({i, value});
+            ++num_edges;
+        }
+    }
+
+    struct lowerindex_lowerdiameter_index_t_struct_compare cmp_index_diameter;
+
+    for (size_t i= 0; i < neighbors.size(); ++i)
+        std::sort(neighbors[i].begin(), neighbors[i].end(), cmp_index_diameter);
+
+    return sparse_distance_matrix(std::move(neighbors), num_edges);
+}
 compressed_lower_distance_matrix read_lower_distance_matrix_python(value_t* matrix, int matrix_length) {
 
     std::vector<value_t> distances(matrix, matrix + matrix_length);
@@ -3543,10 +3607,11 @@ void print_usage_and_exit(int exit_code) {
     exit(exit_code);
 }
 
-
-extern "C" void run_main_filename(int argc,  char** argv, const char* filename) {
+extern "C" ripser_plusplus_result run_main_filename(int argc,  char** argv, const char* filename) {
 
     Stopwatch sw;
+    
+
 #ifdef PROFILING
     cudaDeviceProp deviceProp;
     size_t freeMem_start, freeMem_end, totalMemory;
@@ -3563,6 +3628,7 @@ extern "C" void run_main_filename(int argc,  char** argv, const char* filename) 
     float ratio= 1;
 
     bool use_sparse= false;
+    
 
     for (index_t i= 0; i < argc; i++) {
         const std::string arg(argv[i]);
@@ -3602,6 +3668,11 @@ extern "C" void run_main_filename(int argc,  char** argv, const char* filename) 
         } else if(arg=="--sparse") {
             use_sparse= true;
         }
+    }
+
+    list_of_barcodes = std::vector<std::vector<birth_death_coordinate>>();
+    for(index_t i = 0; i <= dim_max; i++){
+        list_of_barcodes.push_back(std::vector<birth_death_coordinate>());
     }
 
     std::ifstream file_stream(filename);
@@ -3656,6 +3727,8 @@ extern "C" void run_main_filename(int argc,  char** argv, const char* filename) 
 
         std::cout << "value range: [" << min << "," << max_finite << "]" << std::endl;
 
+        
+
         if (use_sparse) {
 
             std::cout << "sparse distance matrix with " << dist.size() << " points and "
@@ -3680,9 +3753,24 @@ extern "C" void run_main_filename(int argc,  char** argv, const char* filename) 
 
     std::cerr<<"total GPU memory used: "<<(freeMem_start-freeMem_end)/1000.0/1000.0/1000.0<<"GB"<<std::endl;
 #endif
+
+    set_of_barcodes* collected_barcodes = (set_of_barcodes*)malloc(sizeof(set_of_barcodes) * list_of_barcodes.size());
+    for(index_t i = 0; i < list_of_barcodes.size();i++){
+        birth_death_coordinate* barcode_array = (birth_death_coordinate*)malloc(sizeof(birth_death_coordinate) * list_of_barcodes[i].size());
+        
+        index_t j;
+        for(j = 0; j < list_of_barcodes[i].size(); j++){
+            barcode_array[j] = list_of_barcodes[i][j];
+        }
+        collected_barcodes[i] = {j,barcode_array};
+    }
+    
+    res = {dim_max + 1,collected_barcodes};
+
+    return res;
 }
 
-extern "C" void run_main(int argc, char** argv, value_t* matrix, int num_entries, int num_rows, int num_columns) {
+extern "C" ripser_plusplus_result run_main(int argc, char** argv, value_t* matrix, int num_entries, int num_rows, int num_columns) {
 
     Stopwatch sw;
 #ifdef PROFILING
@@ -3732,8 +3820,10 @@ extern "C" void run_main(int argc, char** argv, value_t* matrix, int num_entries
                 format= POINT_CLOUD;
             else if (parameter == "dipha")
                 format= DIPHA;
-            else if (parameter == "sparse")
+            else if (parameter == "sparse") {
                 format= SPARSE;
+                use_sparse = true;
+            }
             else if (parameter == "binary")
                 format= BINARY;
             else
@@ -3743,12 +3833,17 @@ extern "C" void run_main(int argc, char** argv, value_t* matrix, int num_entries
         }
     }
 
+    list_of_barcodes = std::vector<std::vector<birth_death_coordinate>>();
+    for(index_t i = 0; i <= dim_max; i++){
+        list_of_barcodes.push_back(std::vector<birth_death_coordinate>());
+    }
+
     if (format == SPARSE) {//this branch is currently unsupported in run_main, see run_main_filename() instead
         Stopwatch IOsw;
         IOsw.start();
 
-        std::ifstream file_stream(filename);
-        sparse_distance_matrix dist= read_sparse_distance_matrix(filename ? file_stream : std::cin);
+        
+        sparse_distance_matrix dist= read_sparse_distance_matrix_python(matrix,num_entries);
 
         IOsw.stop();
 #ifdef PROFILING
@@ -3817,6 +3912,21 @@ extern "C" void run_main(int argc, char** argv, value_t* matrix, int num_entries
 
     std::cerr<<"total GPU memory used: "<<(freeMem_start-freeMem_end)/1000.0/1000.0/1000.0<<"GB"<<std::endl;
 #endif
+
+    set_of_barcodes* collected_barcodes = (set_of_barcodes*)malloc(sizeof(set_of_barcodes) * list_of_barcodes.size());
+    for(index_t i = 0; i < list_of_barcodes.size();i++){
+        birth_death_coordinate* barcode_array = (birth_death_coordinate*)malloc(sizeof(birth_death_coordinate) * list_of_barcodes[i].size());
+    
+        index_t j;
+        for(j = 0; j < list_of_barcodes[i].size(); j++){
+            barcode_array[j] = list_of_barcodes[i][j];
+        }
+        collected_barcodes[i] = {j,barcode_array};
+    }
+
+    res = {dim_max + 1,collected_barcodes};
+
+    return res;
 }
 
 int main(int argc, char** argv) {
@@ -3881,6 +3991,11 @@ int main(int argc, char** argv) {
             if (filename) { print_usage_and_exit(-1); }
             filename= argv[i];
         }
+    }
+
+    list_of_barcodes = std::vector<std::vector<birth_death_coordinate>>();
+    for(index_t i = 0; i <= dim_max; i++){
+        list_of_barcodes.push_back(std::vector<birth_death_coordinate>());
     }
 
     std::ifstream file_stream(filename);
