@@ -1,1 +1,0 @@
-/usr/bin/c++ -fPIC  -fopenmp -O3 -DNDEBUG  -shared -Wl,-soname,libpyripser++.so -o libpyripser++.so CMakeFiles/pyripser++.dir/__/pyripser++_generated_ripser++.cu.o  -Wl,-rpath,/home/comrade/ripser-plusplus/python/bin /usr/local/cuda/lib64/libcudart_static.a -lpthread -ldl -lrt libphmap.so 

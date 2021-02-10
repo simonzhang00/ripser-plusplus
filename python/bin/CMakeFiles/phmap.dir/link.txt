@@ -1,1 +1,0 @@
-/usr/bin/c++ -fPIC  -fopenmp -O3 -DNDEBUG  -shared -Wl,-soname,libphmap.so -o libphmap.so CMakeFiles/phmap.dir/home/comrade/ripser-plusplus/include/phmap_interface/phmap_interface.cpp.o 
