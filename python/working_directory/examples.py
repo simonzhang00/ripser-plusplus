@@ -128,6 +128,6 @@ BINARY MATRIX - USER MATRIX
 #print("BINARY MATRIX - USER MATRIX - Currently not available", sys.stderr)
 
 '''
-SPARSE MATRIX - USER MATRIX
+SPARSE MATRIX - USER MATRIX (see sp_tests.py)
 '''
-#print("SPARSE MATRIX - USER MATRIX - Currently not available", sys.stderr)
+#print("SPARSE MATRIX - USER MATRIX - see sp_tests.py", sys.stderr)

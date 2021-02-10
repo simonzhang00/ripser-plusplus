@@ -1,15 +1,17 @@
 # Instructions on how to use Python Bindings of Ripser++
 The purpose of the Python Bindings is to allow users to write their own Python scripts to run Ripser++. The user can write Python preprocessing code on the inputs of Ripser++. This can eliminate file I/O and allow for automated calling of Ripser++.
 
-Author: Birkan Gokbag
+Contributors:
+Birkan Gokbag, 
+Ryan DeMilt
 
 Editor: Simon Zhang
 
 Before using this interface, please read the README for Ripser++ from the ripser-plusplus/ directory as Python bindings requires Ripser++ requirements to be met.
 
 Requirements:
-    Python 3.x and
-    NumPy
+Python 3.x and
+NumPy
 
 (As of January 2020, Python 2.x has been [sunset](https://www.python.org/doc/sunset-python-2/))
 
@@ -34,7 +36,7 @@ python/
 
 ## How do the Python Bindings Work?
 
-You will still need all of the dependencies of Ripser++ in order to build the necessary binaries. There is a CMakeLists.txt file in the ripser-plusplus/python/ folder that will create a Makefile that builds a shared object file: ripser-plusplus/python/bin/lipyripser++.so from ripser++.cu. lipyripser++.so is loaded through the ctypes foreign function library of Python. Ripser++ is then accessed through the ripser_plusplus_python package with an API of one function called ```run(-,-)``` to be called by your own custom Python script. The PYTHONPATH environment variable must be set to allow the ripser_plusplus_python package to be imported from your Python scripts. Otherwise, if you have enough privileges on your system, you can ```pip3 install .``` in the ripser-plusplus/python/ directory.
+You will still need all of the dependencies of Ripser++ in order to build the necessary binaries. There is a CMakeLists.txt file in the ripser-plusplus/python/ folder that will create a Makefile that builds a shared object file: ripser-plusplus/python/bin/lipyripser++.so from ripser++.cu. lipyripser++.so is loaded through the ctypes foreign function library of Python. Ripser++ is then accessed through the ripser_plusplus_python package with an API of one function called ```run(-,-)``` to be called by your own custom Python script. The PYTHONPATH environment variable must be set to allow the ripser_plusplus_python package to be imported from your Python scripts. Otherwise, you can ```pip3 install . --user``` in the ripser-plusplus/python/ directory.
 
 ## Installation
 
@@ -51,10 +53,10 @@ from the ripser-plusplus directory follow these steps:
 1) Create the ripser-plusplus/python/bin directory: ```mkdir -p python/bin``` if necessary
 2) Under ripser-plusplus/python/bin/, run ``` cmake .. && make ``` to compile the project and make the executables
 3) Set environment variable for the libpyripser++.so with name PYRIPSER_PP_BIN, like:
-     ```export PYRIPSER_PP_BIN=$PWD/libpyripser++``` under python/bin/
-4) Append to PYTHONPATH the location of the directory containing the ripser_plusplus_python package, like:
-     ```export PYTHONPATH="${PYTHONPATH}:$PWD/.."```
-5) (Optional) Under ripser-plusplus/python/, run ``` pip3 install . ``` to install the project as a Python package. If you are using python3, use pip3.
+   ```export PYRIPSER_PP_BIN=$PWD/libpyripser++``` under python/bin/
+4) (Optional) Append to PYTHONPATH the location of the directory containing the ripser_plusplus_python package, like:
+   ```export PYTHONPATH="${PYTHONPATH}:$PWD/.."```
+5) Under ripser-plusplus/python/, run ``` pip3 install . --user``` to install the project as a Python package. If you are using python3, use pip3.
 6) Navigate to ripser-plusplus/python/working_directory/ and check examples.py to see the usage for Python integration, and create your own script to run Ripser++ with Python. The arguments supplied to Python integration are identical to the ones supplied to Ripser++ executable; it supports user matrices in distance and lower-distance formats.
 
 Important Notes:
@@ -75,9 +77,10 @@ ripser_plusplus_python package API:
     * Second Argument: Could be either of the following but not both
         * matrix: Must be a numpy array
             * e.g. ```[3,2,1]``` is a lower-distance matrix of 3 points
-            * e.g. ```[[0,3,2],[3,0,1],[2,1,0]]``` is a distance matrix of 3 points 
+            * e.g. ```[[0,3,2],[3,0,1],[2,1,0]]``` is a distance matrix of 3 points
         * file_name: Must be of type string.
             * e.g. ```"../../examples/sphere_3_192.distance_matrix.lower_triangular"```
+    * Output: a Python dictionary of numpy arrays of persistence pairs; the dictionary is indexed by the dimension of the array of persistence pairs.
 
 ## How to use Ripser++ with Python Bindings?
 
@@ -133,7 +136,11 @@ e.g. ```rpp_py.run("--format point-cloud",np.array([3,2,1],[1,2,3]))```
 runs Ripser++ on a 2 point point cloud in 3 dimensional Euclidean space.
 
 #### sparse (COO):
-* Currently not supported, use file name
+* Requires SciPy
+* Supports a SciPy [coo matrix](https://docs.scipy.org/doc/scipy/reference/generated/scipy.sparse.coo_matrix.html)
+
+e.g. ```import scipy.sparse as sps; mtx = sps.coo_matrix([[0, 5, 0, 0, 0, 0],[5, 0, 0, 7, 0, 12],[0, 0, 0, 0, 0, 0],[0, 7, 0, 0, 22, 0],[0, 0, 0, 22, 0, 0],[0, 12, 0 ,0, 0, 0]]); rpp_py.run("--format sparse", mtx)```
+
 
 ### Running Python scripts
-To run your Python scripts, run, for example, ``` python3 myExample.py``` or ```python3 examples.py``` in the working_directory. This runs Ripser++ with its output sent to stderr and stdout as if it ran from the console. Python 2 is no longer supported, please use python3 when running your scripts.
+To run your Python scripts, run, for example, ``` python3 myExample.py``` or ```python3 examples.py``` in the working_directory. This runs Ripser++ with its output sent to stderr and stdout as if it ran from the console. A Python dictionary is the output of the run function. Python 2 is no longer supported, please use python3 when running your scripts.

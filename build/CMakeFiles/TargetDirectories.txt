@@ -1,7 +1,0 @@
-/home/comrade/ripser-plusplus/build/CMakeFiles/rebuild_cache.dir
-/home/comrade/ripser-plusplus/build/CMakeFiles/tests.dir
-/home/comrade/ripser-plusplus/build/CMakeFiles/edit_cache.dir
-/home/comrade/ripser-plusplus/build/CMakeFiles/load_testing.dir
-/home/comrade/ripser-plusplus/build/CMakeFiles/ripser.dir
-/home/comrade/ripser-plusplus/build/CMakeFiles/ripser++.dir
-/home/comrade/ripser-plusplus/build/CMakeFiles/phmap.dir

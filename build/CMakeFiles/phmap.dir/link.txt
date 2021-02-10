@@ -1,2 +1,0 @@
-/bin/ar qc libphmap.a  CMakeFiles/phmap.dir/include/phmap_interface/phmap_interface.cpp.o
-/bin/ranlib libphmap.a

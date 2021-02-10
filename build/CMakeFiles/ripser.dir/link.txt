@@ -1,1 +1,0 @@
-/bin/g++-9   -fopenmp -O3 -DNDEBUG    -rdynamic CMakeFiles/ripser.dir/ripser.cpp.o  -o ripser 

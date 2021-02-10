@@ -1,8 +1,9 @@
 # Ripser++
 
-Copyright © 2019, 2020 Simon Zhang, Mengbai Xiao, Hao Wang
+Copyright © 2019, 2020, 2021 Simon Zhang, Mengbai Xiao, Hao Wang
 
-Python bindings: Birkan Gokbag
+Contributors:
+[Birkan Gokbag](https://github.com/BirkanGokbag), [Ryan DeMilt](https://github.com/ryanpdemilt)
 
 Ripser++ `[3]` is built on top of the Ripser `[1]` software written by Ulrich Bauer and utilizes both GPU and CPU (via separation of parallelisms `[4]`) to accelerate the computation of Vietoris-Rips persistence barcodes.
 
@@ -21,15 +22,15 @@ Dependencies:
 2. Make sure CUDA is installed at the correct version (e.g. CUDA 9.2.88).
 
 3. Make sure GCC is installed at the correct version (e.g. GCC 7.3.0).
-    Note: If you turn on the preprocessor directive: `#define CPUONLY_SPARSE_HASHMAP`, then you must lower your GCC version to 7.3.0.
-    For CUDA versions higher than 10, GCC must be lowered to atmost 8.
+   Note: If you turn on the preprocessor directive: `#define CPUONLY_SPARSE_HASHMAP`, then you must lower your GCC version to 7.3.0.
+   For CUDA versions higher than 10, GCC must be lowered to atmost 8.
 4. A Linux operating system is needed.
 
 Ripser++ is intended to run on high performance computing systems.
 
-Thus, a GPU with enough device memory is needed to run large datasets. (e.g. Tesla V100 GPU with 32GB device DRAM). If the system's GPU is not compatible, or the system does not have a GPU, error messages will appear. 
+Thus, a GPU with enough device memory is needed to run large datasets. (e.g. Tesla V100 GPU with 32GB device DRAM). If the system's GPU is not compatible, or the system does not have a GPU, error messages will appear.
 
-You do not have to have a super computer, however. On my $900 dollar laptop with a 6GB device memory NVIDIA GPU, I was able to run the sphere_3_192 dataset to dimension 3 computation with a 15x speedup over Ripser. 
+You do not have to have a super computer, however. On my $900 dollar laptop with a 6GB device memory NVIDIA GPU, I was able to run the sphere_3_192 dataset to dimension 3 computation with a 15x speedup over Ripser.
 
 It is also preferable to have a multicore processor (e.g. >= 28 cores) for high performance, and a large amount of DRAM is required for large datasets. We have tested on a 100 GB DRAM single computing node with 28 cores.
 
@@ -152,7 +153,7 @@ We provide 6 datasets that are also used in our experiments. For more datasets s
 
 ## Python Bindings
 
-Birkan Gokbag is the author of Python bindings for Ripser++. For information on how to use the Python bindings, consult the README documentation under the ripser-plusplus/python/ directory.
+For information on how to use the Python bindings, consult the README documentation under the ripser-plusplus/python/ directory.
 
 To install the Python bindings from the ripser-plusplus directory, type the command:
 
@@ -162,7 +163,7 @@ source install_w_python_bindings.sh
 
 This will take you to the ripser-plusplus/python/working_directory/ directory after installation. In this directory you can, for example, write your own Python scripts to preprocess data to form distance matrices and subsequently run Ripser++ on such preprocessed data. In particular, one can apply the approximation algorithm found [here](https://ripser.scikit-tda.org/notebooks/Approximate%20Sparse%20Filtrations.html) to sparsify distance matrices up to some approximation factor on barcode lengths. This can be used when the filtration size becomes unwieldy.
 
-**Note**: you should either run ```source install_w_python_bindings.sh``` from the ripser-plusplus directory every time you start a new session or manually set the PYTHONPATH environment variable for each session to make the Python bindings work (be able to import ripser_plusplus_python). Otherwise, you can add the line: sys.path.insert(0, '../') to any Python script in the working_directory. If you have enough privileges on your system, you can also run ```pip install .``` in the ripser-plusplus/python/ directory.
+**Note**: you should either run ```source install_w_python_bindings.sh``` from the ripser-plusplus directory every time you start a new session or manually set the PYTHONPATH environment variable for each session to make the Python bindings work (be able to import ripser_plusplus_python). Otherwise, you can add the line: sys.path.insert(0, '../') to any Python script in the working_directory. You can also run ```pip3 install . --user``` in the ripser-plusplus/python/ directory.
 
 ## Citing:
 

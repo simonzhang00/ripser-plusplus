@@ -15,9 +15,9 @@ with io.open(os.path.join(CURDIR, "README.md"), "r", encoding="utf-8") as f:
 
 setup(
     name="ripser_plusplus_python",
-    version="1.0.0",
-    author="Birkan Gokbag - Python Binding, Simon Zhang - Ripser++",
-    author_email="birkan.gokbag@gmail.com, szhang31415@gmail.com",
+    version="1.0.1",
+    author="Birkan Gokbag, Ryan DeMilt - Python Binding, Simon Zhang - Ripser++",
+    author_email="birkan.gokbag@gmail.com, demilt.ryan@gmail.com, szhang31415@gmail.com",
     description="Python binding for Ripser++.",
     long_description=README,
     url="https://github.com/simonzhang00/ripser-plusplus",

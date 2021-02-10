@@ -5,7 +5,9 @@
 
  Copyright (c) 2019, 2020 Simon Zhang, Mengbai Xiao, Hao Wang
 
- Python Bindings: Birkan Gokbag
+ Python Bindings Contributors:
+ Birkan Gokbag
+ Ryan DeMilt
 
  Copyright (c) 2015-2019 Ripser codebase, written by Ulrich Bauer
 
@@ -51,7 +53,7 @@
 //#define INDICATE_PROGRESS//DO NOT UNCOMMENT THIS IF YOU WANT TO LOG PROFILING NUMBERS FROM stderr TO FILE
 //#define PRINT_PERSISTENCE_PAIRS//print out all persistence paris to stdout
 //#define CPUONLY_ASSEMBLE_REDUCTION_MATRIX//do full matrix reduction on CPU with the sparse coefficient matrix V
-//#define ASSEMBLE_REDUCTION_SUBMATRIX//do submatrix reduction with the sparse coefficient submatrix of V
+#define ASSEMBLE_REDUCTION_SUBMATRIX//do submatrix reduction with the sparse coefficient submatrix of V
 //#define PROFILING
 //#define COUNTING
 #define USE_PHASHMAP//www.github.com/greg7mdp/parallel-hashmap

@@ -19,9 +19,12 @@ print(mtx)
 
 args = "--dim 1 --format sparse --threshold 5"
 file_name_or_matrix = mtx
-rpp_py.run(args, file_name_or_matrix)
+d1= rpp_py.run(args, file_name_or_matrix)
 
 
 args = "--dim 1 --format sparse --threshold 5"
 file_name_or_matrix = "sp_test.sparse_matrix"
-rpp_py.run(args, file_name_or_matrix)
+d2= rpp_py.run(args, file_name_or_matrix)
+
+print(d1)
+print(d2)

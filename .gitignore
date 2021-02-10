@@ -1,4 +1,4 @@
 build/
 python/bin/
 vscode/
-python/bin
+cmake-build-debug

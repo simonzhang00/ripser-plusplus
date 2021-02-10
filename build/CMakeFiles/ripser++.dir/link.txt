@@ -1,1 +1,0 @@
-/bin/g++-9   -fopenmp -O3 -DNDEBUG    -rdynamic CMakeFiles/ripser++.dir/ripser++_generated_ripser++.cu.o  -o ripser++  /usr/local/cuda/lib64/libcudart_static.a -lpthread -ldl -lrt libphmap.a 

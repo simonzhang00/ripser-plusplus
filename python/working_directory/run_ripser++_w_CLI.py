@@ -21,6 +21,6 @@ else:
 
 if not os.path.isfile(file_name):
     print("File not found for " + file_name + ", exiting...", sys.stderr)
-    sys.exit()     
+    sys.exit()
 
-rpp_py.run(args, file_name)
+print(rpp_py.run(args, file_name))
