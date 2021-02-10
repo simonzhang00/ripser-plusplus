@@ -49,11 +49,11 @@
     } while(0)
 
 //#define INDICATE_PROGRESS//DO NOT UNCOMMENT THIS IF YOU WANT TO LOG PROFILING NUMBERS FROM stderr TO FILE
-#define PRINT_PERSISTENCE_PAIRS//print out all persistence paris to stdout
+//#define PRINT_PERSISTENCE_PAIRS//print out all persistence paris to stdout
 //#define CPUONLY_ASSEMBLE_REDUCTION_MATRIX//do full matrix reduction on CPU with the sparse coefficient matrix V
 //#define ASSEMBLE_REDUCTION_SUBMATRIX//do submatrix reduction with the sparse coefficient submatrix of V
-#define PROFILING
-#define COUNTING
+//#define PROFILING
+//#define COUNTING
 #define USE_PHASHMAP//www.github.com/greg7mdp/parallel-hashmap
 #define PYTHON_BARCODE_COLLECTION
 #ifndef USE_PHASHMAP
