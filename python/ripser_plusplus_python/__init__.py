@@ -83,7 +83,8 @@ def run(args, data = None):
     if data is not None and isinstance(data, str):
         #file_name = data
         file_name= ctypes.c_char_p(data.encode('utf-8'))
-        matrix = (ctypes.c_float * len(matrix))(*matrix)
+        #matrix = (ctypes.c_float * len(matrix))(*matrix)
+        matrix = None   
     elif data is not None and isinstance(data, np.ndarray):
         matrix = data
     elif data is not None and isinstance(data,sps.coo_matrix):

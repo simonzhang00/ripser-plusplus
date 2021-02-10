@@ -154,7 +154,6 @@ struct index_t_pair_struct{//data type for a pivot in the coboundary matrix: (ro
 };
 
 typedef struct {
-    index_t index;
     value_t birth;
     value_t death;
 } birth_death_coordinate;
@@ -1842,7 +1841,7 @@ public:
                     std::cout << " [0," << e.diameter << ")" << std::endl;
 #endif
                     //Collect persistence pair
-                    birth_death_coordinate barcode = {e.index,0,e.diameter};
+                    birth_death_coordinate barcode = {0,e.diameter};
                     list_of_barcodes[0].push_back(barcode);
                 }
 #endif
@@ -2023,7 +2022,7 @@ public:
                             std::cout << " [" << diameter << "," << death << ")" << std::endl
                                       << std::flush;
 #endif
-                            birth_death_coordinate barcode = {pivot.index,diameter,death};
+                            birth_death_coordinate barcode = {diameter,death};
                             list_of_barcodes[dim].push_back(barcode);
                         }
 #endif
@@ -2121,7 +2120,7 @@ public:
                             std::cout << " [" << diameter << "," << death << ")" << std::endl
                                       << std::flush;
 #endif
-                            birth_death_coordinate barcode = {pivot.index,diameter,death};
+                            birth_death_coordinate barcode = {diameter,death};
                             list_of_barcodes[dim].push_back(barcode);
                         }
 #endif
@@ -2348,7 +2347,7 @@ void ripser<compressed_lower_distance_matrix>::gpu_compute_dim_0_pairs(std::vect
 #ifdef PRINT_PERSISTENCE_PAIRS
                 std::cout << " [0," << e.diameter << ")" << std::endl;
 #endif
-                birth_death_coordinate barcode = {e.index,0,e.diameter};
+                birth_death_coordinate barcode = {0,e.diameter};
                 list_of_barcodes[0].push_back(barcode);
             }
 #endif
@@ -2430,7 +2429,7 @@ void ripser<sparse_distance_matrix>::gpu_compute_dim_0_pairs(std::vector<struct 
 #ifdef PRINT_PERSISTENCE_PAIRS
                 std::cout << " [0," << e.diameter << ")" << std::endl;
 #endif
-                birth_death_coordinate barcode = {e.index,0,e.diameter};
+                birth_death_coordinate barcode = {0,e.diameter};
                 list_of_barcodes[0].push_back(barcode);
             }
 #endif

@@ -13,7 +13,7 @@ class Birth_death_coordinate(ctypes.Structure):
     Replica of datatype for bacrode from cuda
     """
     pass
-    _fields_ = [("index",ctypes.c_int64),("birth",ctypes.c_float),("death",ctypes.c_float)]
+    _fields_ = [("birth",ctypes.c_float),("death",ctypes.c_float)]
 class Set_of_barcodes(ctypes.Structure):
     """
     Replica of datatype for bacrode from cuda
