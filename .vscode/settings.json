@@ -1,5 +1,0 @@
-{
-    "cmake.configureOnOpen": true,
-    "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
-    "python.pythonPath": "/bin/python3"
-}
