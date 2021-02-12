@@ -1558,6 +1558,9 @@ private:
 
     value_t* d_distance_matrix;//GPU copy of the distance matrix
     CSR_distance_matrix* d_CSR_distance_matrix;
+    index_t *h_d_offsets;
+    value_t *h_d_entries;
+    index_t *h_d_col_indices;
 
     //d_pivot_column_index_OR_nonapparent_cols is d_nonapparent_cols when used in gpuscan() and compute_pairs() and is d_pivot_column_index when in gpu_assemble_columns()
     index_t* d_pivot_column_index_OR_nonapparent_cols;//the pivot column index hashmap represented on GPU as an array OR the set of nonapparent columns on GPU
@@ -1569,6 +1572,7 @@ private:
     struct diameter_index_t_struct* h_columns_to_reduce;//columns to reduce depending on the current dimension
 
     binomial_coeff_table* d_binomial_coeff;//GPU copy of the binomial coefficient table
+    index_t* h_d_binoms;
 
     index_t* d_num_columns_to_reduce=NULL;//use d_num_columns_to_reduce to keep track of the number of columns to reduce
     index_t* h_num_columns_to_reduce;//h_num_columns_to_reduce is tied to d_num_columns_to_reduce in pinned memory?
@@ -1604,6 +1608,40 @@ public:
             : dist(std::move(_dist)), n(dist.size()),
               dim_max(std::min(_dim_max, index_t(dist.size() - 2))), threshold(_threshold),
               ratio(_ratio), binomial_coeff(n, dim_max + 2) {}
+
+    void free_gpumem_dense_computation(){
+        cudaFree(d_columns_to_reduce);
+#ifndef ASSEMBLE_REDUCTION_SUBMATRIX
+        cudaFree(d_flagarray);
+#endif
+        cudaFree(d_cidx_to_diameter);
+        cudaFree(d_distance_matrix);
+        cudaFree(d_pivot_column_index_OR_nonapparent_cols);
+#ifdef ASSEMBLE_REDUCTION_SUBMATRIX
+        cudaFree(d_flagarray_OR_index_to_subindex);
+#endif
+        cudaFree(h_d_binoms);
+        cudaFree(d_binomial_coeff);
+        cudaFree(d_lowest_one_of_apparent_pair);
+        cudaFree(d_pivot_array);
+    }
+    void free_gpumem_sparse_computation(){
+        cudaFree(d_columns_to_reduce);
+#ifdef ASSEMBLE_REDUCTION_SUBMATRIX
+        cudaFree(d_flagarray_OR_index_to_subindex);
+#endif
+        cudaFree(h_d_offsets);
+        cudaFree(h_d_entries);
+        cudaFree(h_d_col_indices);
+        cudaFree(d_CSR_distance_matrix);
+        cudaFree(d_cidx_diameter_pairs_sortedlist);
+        cudaFree(d_pivot_column_index_OR_nonapparent_cols);
+        cudaFree(h_d_binoms);
+        cudaFree(d_binomial_coeff);
+        cudaFree(d_lowest_one_of_apparent_pair);
+        cudaFree(d_pivot_array);
+        cudaFree(d_simplices);
+    }
 
     void free_init_cpumem() {
         free(h_pivot_column_index_array_OR_nonapparent_cols);
@@ -3057,7 +3095,7 @@ void ripser<compressed_lower_distance_matrix>::compute_barcodes() {
         cudaMemcpy(d_binomial_coeff, &binomial_coeff, sizeof(binomial_coeff_table), cudaMemcpyHostToDevice);
 
         index_t num_binoms= binomial_coeff.get_num_n()*binomial_coeff.get_max_tuple_length();
-        index_t* h_d_binoms;
+
         CUDACHECK(cudaMalloc((void **) &h_d_binoms, sizeof(index_t)*num_binoms));
         cudaMemcpy(h_d_binoms, binomial_coeff.binoms, sizeof(index_t)*num_binoms, cudaMemcpyHostToDevice);
         cudaMemcpy(&(d_binomial_coeff->binoms), &h_d_binoms, sizeof(index_t*), cudaMemcpyHostToDevice);
@@ -3176,6 +3214,7 @@ void ripser<compressed_lower_distance_matrix>::compute_barcodes() {
             }
         }
     }
+    free_gpumem_dense_computation();
 }
 
 template <>
@@ -3221,10 +3260,6 @@ void ripser<sparse_distance_matrix>::compute_barcodes(){
         CUDACHECK(cudaMalloc((void **) &d_CSR_distance_matrix, sizeof(CSR_distance_matrix)));
         cudaMemcpy(d_CSR_distance_matrix, &CSR_distance_matrix, sizeof(CSR_distance_matrix), cudaMemcpyHostToDevice);
 
-        index_t *h_d_offsets;
-        value_t *h_d_entries;
-        index_t *h_d_col_indices;
-
         CUDACHECK(cudaMalloc((void **) &h_d_offsets, sizeof(index_t) * (CSR_distance_matrix.n + 1)));
         cudaMemcpy(h_d_offsets, CSR_distance_matrix.offsets, sizeof(index_t) * (CSR_distance_matrix.n + 1), cudaMemcpyHostToDevice);
         cudaMemcpy(&(d_CSR_distance_matrix->offsets), &h_d_offsets, sizeof(index_t *), cudaMemcpyHostToDevice);
@@ -3255,7 +3290,7 @@ void ripser<sparse_distance_matrix>::compute_barcodes(){
         cudaMemcpy(d_binomial_coeff, &binomial_coeff, sizeof(binomial_coeff_table), cudaMemcpyHostToDevice);
 
         index_t num_binoms= binomial_coeff.get_num_n()*binomial_coeff.get_max_tuple_length();
-        index_t* h_d_binoms;
+
         CUDACHECK(cudaMalloc((void **) &h_d_binoms, sizeof(index_t)*num_binoms));
         cudaMemcpy(h_d_binoms, binomial_coeff.binoms, sizeof(index_t)*num_binoms, cudaMemcpyHostToDevice);
         cudaMemcpy(&(d_binomial_coeff->binoms), &h_d_binoms, sizeof(index_t*), cudaMemcpyHostToDevice);
@@ -3355,7 +3390,7 @@ void ripser<sparse_distance_matrix>::compute_barcodes(){
 #ifdef PROFILING
     std::cerr<<"GPU ACCELERATED COMPUTATION: "<<gpu_accel_timer.ms()/1000.0<<"s"<<std::endl;
 #endif
-
+    free_gpumem_sparse_computation();
 }
 
 ///I/O code
