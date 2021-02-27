@@ -1,5 +1,8 @@
 # Ripser++
 
+[![PyPI license](https://img.shields.io/pypi/l/ripserplusplus.svg)](https://pypi.org/project/ripserplusplus/)
+[![Open In Collab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/gist/simonzhang00/44f3f1e65c57d8f4241d34ac83002da9/ripser-plusplus-on-googlecolab.ipynb#scrollTo=nBy0beb9Z1Bi)
+
 Copyright © 2019, 2020, 2021 Simon Zhang, Mengbai Xiao, Hao Wang
 
 Contributors:
@@ -34,27 +37,177 @@ You do not have to have a super computer, however. On my $900 dollar laptop with
 
 It is also preferable to have a multicore processor (e.g. >= 28 cores) for high performance, and a large amount of DRAM is required for large datasets. We have tested on a 100 GB DRAM single computing node with 28 cores.
 
+## Installing Python Bindings (preferred)
+
+The purpose of the Python Bindings is to allow users to write their own Python scripts to run Ripser++. The user can write Python preprocessing code on the inputs of Ripser++. This can eliminate file I/O and allow for automated calling of Ripser++.
+
+Contributors:
+Birkan Gokbag,
+Ryan DeMilt,
+Simon Zhang
+
+Requirements:
+
+Linux,
+CMake,
+CUDA,
+gcc from Ripser++
+
+Python 3.x,
+NumPy,
+SciPy
+
+(As of January 2020, Python 2.x has been [sunset](https://www.python.org/doc/sunset-python-2/))
+
+## Installation
+
+```
+pip3 install ripserplusplus
+```
+
+or in the ripser-plusplus/ directory:
+
+```
+git clone https://github.com/simonzhang00/ripser-plusplus.git
+pip3 install .
+cd ripserplusplus
+```
+
+Notice after local installation you need to go to a different directory than ripser-plusplus/ due to path searching in the ```__init__.py``` file.
+
+## The ripserplusplus Python API
+
+ripserplusplus package API:
+* Function to Access Ripser++:
+    ```
+        run(arguments_list, matrix or file_name)
+    ```
+   * First Argument:
+      * arguments_list: Contains the command line options to be entered into Ripser++ as a string. e.g. ```"--format lower-distance --dim 2"```
+   * Second Argument: Could be either of the following but not both
+      * matrix: Must be a numpy array
+         * e.g. ```[3,2,1]``` is a lower-distance matrix of 3 points
+         * e.g. ```[[0,3,2],[3,0,1],[2,1,0]]``` is a distance matrix of 3 points
+      * or sparse matrix: A scipy coo format matrix
+         * e.g. ```mtx = sps.coo_matrix([[0, 5, 0, 0, 0, 0],[5, 0, 0, 7, 0, 12],[0, 0, 0, 0, 0, 0],[0, 7, 0, 0, 22, 0],[0, 0, 0, 22, 0, 0],[0, 12, 0 ,0, 0, 0]])```
+      * or file_name: Must be of type string.
+         * e.g. ```"../../examples/sphere_3_192.distance_matrix.lower_triangular"```
+   * Output: a Python dictionary of numpy arrays of persistence pairs; the dictionary is indexed by the dimension of the array of persistence pairs.
+   
+Options of Ripser++ for Python bindings:
+
+``` 
+
+Options:
+
+  --help           print this screen
+  --format         use the specified file format for the input. Options are:
+                     lower-distance (lower triangular distance matrix; default)
+                     distance       (full distance matrix)
+                     point-cloud    (point cloud in Euclidean space)
+                     sparse         (sparse distance matrix in sparse triplet (COO) format)
+  --dim <k>        compute persistent homology up to dimension <k>
+  --threshold <t>  compute Rips complexes up to diameter <t>
+  --sparse         force sparse computation
+  --ratio <r>      only show persistence pairs with death/birth ratio > r
+```
+
+## How to use Ripser++ with Python Bindings?
+
+Check out the following [gist](https://colab.research.google.com/gist/simonzhang00/44f3f1e65c57d8f4241d34ac83002da9/ripser-plusplus-on-googlecolab.ipynb)
+of Ripser++ running on Google Colab.
+
+After having installed the Python bindings successfully (see the Installation section), first checkout the sample code in ripserplusplus/python_examples/ such as examples.py.
+
+To create your own Python script to run Ripser++. Create a Python file (e.g. myExample.py) under ripser-plusplus/python/working_directory/.
+At the top of your Python script:
+
+Import the ripser_plusplus_python package to access Ripser++ computing engine:
+
+```
+import ripser_plusplus_python as rpp_py
+```
+Also import numpy, if you want to input a User Matrix:
+```
+import numpy as np
+```
+In your Python script, call ```run(arguments_list, matrix or file_name)``` with the following usages:
+
+### Read from File
+
+Python bindings work with file name inputs similar to ripser++ executable. Examples are located under ripser-plusplus/python/working_directory/examples.py.
+
+e.g. ```rpp_py.run("--format point-cloud --sparse --dim 2 --threshold 1.4", "../../examples/o3_4096.point_cloud")```
+
+### User Matrix Formats
+
+**Note**: default user matrix format is distance in Ripser++. If you know your matrix format is different, then you must use the --format option
+
+#### distance matrix:
+* Only supports matrix with the following constraints:
+   * Has only 0s at diagonals
+   * Symmetric
+   * Lower Triangular matrix adhears to the same constraints as lower-distance matrix
+
+e.g. ```rpp_py.run("--format distance", np.array([[0,3,2],[3,0,1],[2,1,0]]))```
+
+runs Ripser++ on a 3 point finite metric space.
+
+#### lower-distance matrix:
+* Only supports vectors, as either a row or column vector
+* Must be the same size as a square matrix's linearized lower triangular matrix
+
+e.g. ```rpp_py.run("--format lower-distance",np.array([3,2,1]))```
+
+runs Ripser++ on the same data as the distance matrix given above.
+#### point-cloud:
+* Supports a 2-d numpy array where the number of rows are the number of points embedded in d-dimensional euclidan space and the number of columns is d
+* Assumes the Euclidean distance between points
+
+e.g. ```rpp_py.run("--format point-cloud",np.array([3,2,1],[1,2,3]))```
+
+runs Ripser++ on a 2 point point cloud in 3 dimensional Euclidean space.
+
+#### sparse (COO):
+* Requires SciPy
+* Supports a SciPy [coo matrix](https://docs.scipy.org/doc/scipy/reference/generated/scipy.sparse.coo_matrix.html)
+
+e.g. ```import scipy.sparse as sps; mtx = sps.coo_matrix([[0, 5, 0, 0, 0, 0],[5, 0, 0, 7, 0, 12],[0, 0, 0, 0, 0, 0],[0, 7, 0, 0, 22, 0],[0, 0, 0, 22, 0, 0],[0, 12, 0 ,0, 0, 0]]); rpp_py.run("--format sparse", mtx)```
+
+
+### Running Python scripts
+To run your Python scripts, run, for example, ``` python3 myExample.py``` or ```python3 examples.py``` in the working_directory. This runs Ripser++ through python. A Python dictionary is the output of the run function. Python 2 is no longer supported, please use python3 when running your scripts.
+
+
+for usage, see the file ripserplusplus/python_examples.py
+
+## How do the Python Bindings Work?
+
+setup.py will build shared object files with CMake: lipyripser++.so and libphmap.so from ripser++.cu. lipyripser++.so is loaded through the ctypes foreign function library of Python. Ripser++ is accessed with the API of one function called ```run(-,-)``` to be called by your own custom Python script.
+
+## Raw Installation From Source
+
 Under a Linux Operating System, type the following commands:
 
 ```
 git clone https://github.com/simonzhang00/ripser-plusplus.git
-cd ripser-plusplus
+cd ripser-plusplus/ripserplusplus
 source install_simple.sh
 ```
 
-The current directory should now be ripser-plusplus/build and the executables ripser++, ripser, and the shell script run.sh should show up in the current directory.
+The current directory should now be ripser-plusplus/ripserplusplus/build and the executables ripser++, ripser, and the shell script run.sh should show up in the current directory.
 
 To manually build, type the following commands:
 
 ```
 git clone https://github.com/simonzhang00/ripser-plusplus.git
-cd ripser-plusplus
+cd ripser-plusplus/ripserplusplus
 mkdir build
 cd build
 cmake .. && make -j$(nproc)
 ```
 
-There are some preprocessor directives that may be turned on or off. For example, uncomment the line (remove the hash #) : `#target_compile_definitions(ripser++ PUBLIC INDICATE_PROGRESS)` in the CMakeLists.txt file to turn on `INDICATE_PROGRESS`.
+In ripser++.cu there are some preprocessor directives that may be turned on or off. For example, uncomment the line (remove the hash #) : `#target_compile_definitions(ripser++ PUBLIC INDICATE_PROGRESS)` in the CMakeLists.txt file to turn on `INDICATE_PROGRESS`.
 
 The preprocessor directives that can be toggled on are as follows:
 - `INDICATE_PROGRESS`: print out the submatrix reduction progress on console; do not use this when redirecting stderr to a file.
@@ -64,7 +217,7 @@ The preprocessor directives that can be toggled on are as follows:
 
 The only undefined preprocessor directive by default that may improve performance on certain datasets is `ASSEMBLE_REDUCTION_SUBMATRIX`. On certain datasets, especially those where submatrix reduction takes up a large amount of time, the reduction submatrix for submatrix reduction lowers the number of column additions compared to oblivious submatrix reduction at the cost of the overhead of keeping track of the reduction submatrix. However, for most of the datasets we tested on, there is no need to adjust the preprocessor directives for performance.
 
-The following preprocessor directives are defined by default and may be turned off by manually commenting them out in the code:
+The following preprocessor directives are defined and may be turned off by manually commenting them out in the code:
 - `PRINT_PERSISTENCE_PAIRS`: prints out the persistence pairs to stdout.
 - `COUNTING`: prints to stderr the count of different types of columns.
 - `PROFILING`: prints to stderr the timing in seconds of different components of computation as well as total GPU memory usage.
@@ -72,7 +225,7 @@ The following preprocessor directives are defined by default and may be turned o
 
 ## To Run the Provided Datasets
 
-Please install Ripser++ (see previous section) before trying to run the software.
+Please install Ripser++ (see section on raw installation) before trying to run the software.
 
 Let the current directory be the build directory, then, assuming the above installation procedure worked, type the following command to execute the functional tests to check on installation and GPU compatibility:
 
@@ -90,11 +243,14 @@ To see the performance of Ripser++ on a single data set, type the command:
 
 With a Tesla V100 GPU with 32 GB device memory, this should take just a few seconds (e.g. ~2 to 3 seconds).
 
+### optional benchmarking
 While in the build directory, to compare the performance of Ripser++ with the August 2019 version of [Ripser](https://github.com/Ripser/ripser) and run all 6 datasets provided in the examples directory, type:
 
 ```
 source run.sh
 ```
+
+**Note**: you will need a very high end GPU to run run.sh effectively. Don't worry about run.sh if you do not have a >20 GB device memory GPU. 
 
 The profiling results should print out.
 
@@ -108,6 +264,8 @@ e.g.
 ```
 
 Open the *.gpu.barcodes and *.cpu.barcodes files in the text editor to see the barcodes.
+
+## Running Ripser++ from command line
 
 In general, to run in the build directory, type:
 
@@ -151,19 +309,35 @@ The options for Ripser++ are almost the same as those in [Ripser](https://github
 
 We provide 6 datasets that are also used in our experiments. For more datasets see [Ulrich Bauer](https://github.com/Ripser/ripser)'s original Ripser repository Github site as well as [Nina Otter](https://github.com/n-otter/PH-roadmap)'s repository on Github for her paper `[2]`. You can generate custom finite metric spaces (distance matrices) or Euclidean space point clouds manually as well.
 
-## Python Bindings
+## File Organization
 
-For information on how to use the Python bindings, consult the README documentation under the ripser-plusplus/python/ directory.
-
-To install the Python bindings from the ripser-plusplus directory, type the command:
+Skeleton directory structure of ripser-plusplus/ripserplusplus/:
 
 ```
-source install_w_python_bindings.sh
+ripser-plusplus/
+   |─ LICENSE        - MIT license 
+   |─ CMakeLists.txt - builds the .so files for the python bindings
+   |─ MANIFEST.in    - PyPI uploading information
+   |─ README.md      - this file
+   |─ setup.py       - installs the python bindings
+   ripserplusplus/
+      |─ examples/ - sample datasets for command line ripser++
+      |─ include/  - include files for ripser++.cu
+      └─ python_examples/ - Contains examples on how to use the Python bindings, examples are located under under examples.py, and should be used as a working directory (where Python scripts are written) by the user
+            |── run_ripser++_w_CLI.py - an example of using a file name to run analysis instead of creating user matrix
+            |── run_ripser++_w_matrix.py - an example of creating a user matrix and sending it to Ripser++
+            |── examples.py
+            ... some other python scripts
+            └── your_own_script.py
+      |─ testing/                  - testing scripts (use via 'make tests' in the build folder)
+      |─ __init__.py               - contains run() 
+      |─ CMakeLists.txt            - CMakeLists for building ripser++ command line executable and command line test suite
+      |─ install_simple.sh         - use this to build ripser++ for commandline
+      |─ ripser++.cu               - the source code
+      |─ ripser.cpp                - source code of Ulrich Bauer's original ripser  
+      └─ Ripser_plusplus_Converter - converts python input to ctypes for processing by ripser++
 ```
 
-This will take you to the ripser-plusplus/python/working_directory/ directory after installation. In this directory you can, for example, write your own Python scripts to preprocess data to form distance matrices and subsequently run Ripser++ on such preprocessed data. In particular, one can apply the approximation algorithm found [here](https://ripser.scikit-tda.org/notebooks/Approximate%20Sparse%20Filtrations.html) to sparsify distance matrices up to some approximation factor on barcode lengths. This can be used when the filtration size becomes unwieldy.
-
-**Note**: you should either run ```source install_w_python_bindings.sh``` from the ripser-plusplus directory every time you start a new session or manually set the PYTHONPATH environment variable for each session to make the Python bindings work (be able to import ripser_plusplus_python). Otherwise, you can add the line: sys.path.insert(0, '../') to any Python script in the working_directory. You can also run ```pip3 install . --user``` in the ripser-plusplus/python/ directory.
 
 ## Citing:
 

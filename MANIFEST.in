@@ -1,0 +1,12 @@
+include CMakeLists.txt
+include setup.py
+include LICENSE
+recursive-include ripserplusplus/examples *
+recursive-include ripserplusplus/include *
+recursive-include ripserplusplus/testing *
+recursive-include ripserplusplus/python_examples *
+include ripserplusplus/__init__.py
+include ripserplusplus/Ripser_plusplus_Converter.py
+include ripserplusplus/ripser++.cu
+include ripserplusplus/ripser.cpp
+include ripserplusplus/CMakeLists.txt

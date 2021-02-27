@@ -1,4 +1,8 @@
 build/
-python/bin/
+ripserplusplus/build/
 vscode/
-cmake-build-debug
+cmake-build-debug/
+ripserplusplus/cmake-build-debug/
+dist/
+.vscode/
+*.egg-info
