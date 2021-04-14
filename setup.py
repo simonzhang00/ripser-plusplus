@@ -76,9 +76,9 @@ class build_ext(build_ext_orig):
 
 setup(
     name="ripserplusplus",
-    version="1.0.7",
-    author="Birkan Gokbag, Ryan DeMilt, Simon Zhang - Python Binding, Simon Zhang - Ripser++",
-    author_email="birkan.gokbag@gmail.com, demilt.ryan@gmail.com, szhang31415@gmail.com",
+    version="1.0.9",
+    author="Simon Zhang - Ripser++, Birkan Gokbag, Ryan DeMilt, Simon Zhang - Python Binding",
+    author_email="szhang31415@gmail.com, demilt.ryan@gmail.com, birkan.gokbag@gmail.com ",
     description="Python binding for Ripser++.",
     long_description=README,
     long_description_content_type = 'text/markdown',

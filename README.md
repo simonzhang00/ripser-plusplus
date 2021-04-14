@@ -122,10 +122,10 @@ After having installed the Python bindings successfully (see the Installation se
 To create your own Python script to run Ripser++. Create a Python file (e.g. myExample.py) under ripser-plusplus/python/working_directory/.
 At the top of your Python script:
 
-Import the ripser_plusplus_python package to access Ripser++ computing engine:
+Import the ripserplusplus package to access Ripser++ computing engine:
 
 ```
-import ripser_plusplus_python as rpp_py
+import ripserplusplus as rpp_py
 ```
 Also import numpy, if you want to input a User Matrix:
 ```
