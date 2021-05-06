@@ -7,7 +7,7 @@ find_package(CUDA 7 REQUIRED)
 set(CMAKE_BUILD_TYPE "Release")
 
 INCLUDE(CheckCXXSourceCompiles)
-include(GenerateExportHeader)
+include(GenerateExportHeader)#https://blog.kitware.com/create-dlls-on-windows-without-declspec-using-new-cmake-export-all-feature/
 
 include_directories(ripserplusplus/include)
 

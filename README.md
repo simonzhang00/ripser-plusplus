@@ -69,12 +69,16 @@ Ryan DeMilt,
 Birkan Gokbag,
 Simon Zhang
 
-Requirements:
+**Requirements**:
 
-Linux, (or Windows)
+(Requirements from Installation Requirements Section)
+
+Linux, (or Windows), 
 CMake >=3.10,
 CUDA >=10.1,
-GCC >=7.5
+GCC >=7.5 (Linux) or Microsoft Visual Studio 2019 (Windows)
+
+Python Requirements:
 
 Python 3.x,
 NumPy,
@@ -107,7 +111,7 @@ cd ripserplusplus
 Notice after local installation you need to go to a different directory than ripser-plusplus/ due to path searching in the ```__init__.py``` file.
 
 **Note** Compilation currently can take >=2 minutes on Windows due to a workaround and >=1 minute on Linux so be patient!
-**Note** You need all of the software and hardware requirements listed in the installation section.
+**Note** You need all of the software and hardware requirements listed in the installation requirements section.
 
 ## The ripserplusplus Python API
 
