@@ -21,17 +21,23 @@ After dimension 0 persistence computation, there are two stages of computation i
 
 Dependencies:
 
-a 64 bit Operating System
-Linux, (or Windows)
-CMake >=3.10, (e.g. CMake 3.10.2)
-CUDA >=10.1, (e.g. CUDA 10.1.243)
+1. a 64 bit Operating System
 
-GCC >=7.5, (e.g. GCC 8.4.0) for Linux
-OR MSVC 192x (e.g. MSVC 1928 for Visual Studio 2019 v16.9.2) for Windows
+2. a. Linux
 
-*Note* for compilation on Windows, it is best if Cygwin uninstalled
+   OR b. Windows
 
-Note: If you turn on the preprocessor directive: `#define CPUONLY_SPARSE_HASHMAP`, then you must lower your GCC version to 7.3.0.
+3. CMake >=3.10, (e.g. CMake 3.10.2)
+
+4. CUDA >=10.1, (e.g. CUDA 10.1.243)
+
+5. a. GCC >=7.5, (e.g. GCC 8.4.0 for Linux)
+
+   OR b. MSVC 192x (e.g. MSVC 1928 for Visual Studio 2019 v16.9.2 for Windows)
+
+**Note**: for compilation on Windows, it is best if Cygwin is uninstalled
+
+*Note*: If you turn on the preprocessor directive: `#define CPUONLY_SPARSE_HASHMAP`, then you must lower your GCC version to 7.3.0.
    
 Here is a snippet of the table for CUDA/GCC compatibility:
 |   CUDA version   | max supported GCC version |
