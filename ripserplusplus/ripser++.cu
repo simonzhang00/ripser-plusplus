@@ -1610,13 +1610,13 @@ public:
               ratio(_ratio), binomial_coeff(n, dim_max + 2) {}
 
     void free_gpumem_dense_computation() {
-        if (n>1) {//this fixes a bug for single point persistence being called repeatedly
+        if (n>=10) {//this fixes a bug for single point persistence being called repeatedly
             cudaFree(d_columns_to_reduce);
 #ifndef ASSEMBLE_REDUCTION_SUBMATRIX
             cudaFree(d_flagarray);
 #endif
             cudaFree(d_cidx_to_diameter);
-            if (n > 1) {
+            if (n >= 10) {
                 cudaFree(d_distance_matrix);
             }
             cudaFree(d_pivot_column_index_OR_nonapparent_cols);
@@ -1632,7 +1632,7 @@ public:
         }
     }
     void free_gpumem_sparse_computation() {
-        if (n > 1) {
+        if (n >= 10) {
             cudaFree(d_columns_to_reduce);
 #ifdef ASSEMBLE_REDUCTION_SUBMATRIX
             cudaFree(d_flagarray_OR_index_to_subindex);
@@ -3490,8 +3490,8 @@ sparse_distance_matrix read_sparse_distance_matrix(std::istream& input_stream) {
         s >> value;
         if (i != j) {
             neighbors.resize(std::max({neighbors.size(), i + 1, j + 1}));
-            neighbors[i].push_back({j, value});
-            neighbors[j].push_back({i, value});
+            neighbors[i].push_back({(index_t) j, value});
+            neighbors[j].push_back({(index_t) i, value});
             ++num_edges;
         }
     }
@@ -3515,8 +3515,8 @@ sparse_distance_matrix read_sparse_distance_matrix_python(value_t* matrix, int m
         value = matrix[k+2];
         if (i != j) {
             neighbors.resize(std::max({neighbors.size(), i + 1, j + 1}));
-            neighbors[i].push_back({j, value});
-            neighbors[j].push_back({i, value});
+            neighbors[i].push_back({(index_t) j, value});
+            neighbors[j].push_back({(index_t) i, value});
             ++num_edges;
         }
     }
@@ -3820,7 +3820,7 @@ extern "C" ripser_plusplus_result run_main_filename(int argc,  char** argv, cons
         collected_barcodes[i] = {j,barcode_array};
     }
 
-    res = {dim_max + 1,collected_barcodes};
+    res = {(int)(dim_max + 1),collected_barcodes};
 
     return res;
 }
@@ -3983,7 +3983,7 @@ extern "C" ripser_plusplus_result run_main(int argc, char** argv, value_t* matri
         collected_barcodes[i] = {j,barcode_array};
     }
 
-    res = {dim_max + 1,collected_barcodes};
+    res = {(int)(dim_max + 1),collected_barcodes};
 
     return res;
 }

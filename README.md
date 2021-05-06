@@ -6,6 +6,7 @@
 Copyright © 2019, 2020, 2021 Simon Zhang, Mengbai Xiao, Hao Wang
 
 Contributors:
+(by order of introduction to the project)
 [Birkan Gokbag](https://github.com/BirkanGokbag), [Ryan DeMilt](https://github.com/ryanpdemilt)
 
 Ripser++ `[3]` is built on top of the Ripser `[1]` software written by Ulrich Bauer and utilizes both GPU and CPU (via separation of parallelisms `[4]`) to accelerate the computation of Vietoris-Rips persistence barcodes.
@@ -16,18 +17,34 @@ Ripser++ utilizes the massive parallelism hidden in the computation of Vietoris-
 
 After dimension 0 persistence computation, there are two stages of computation in the original Ripser: filtration construction with clearing followed by matrix reduction. Ripser++ massively parallelizes the filtration construction with clearing stage and extracts the hidden parallelism of finding "apparent pairs" from matrix reduction all on GPU, leaving the computation of submatrix reduction on the remaining nonapparent columns on CPU. By our empirical findings, up to 99.9% of the columns in a cleared coboundary matrix are apparent.
 
-## Installation
+## Installation Requirements
 
 Dependencies:
 
-1. Make sure CMake is installed at the correct version (e.g. CMake 3.10.2).
+a 64 bit Operating System
+Linux, (or Windows)
+CMake >=3.10, (e.g. CMake 3.10.2)
+CUDA >=10.1, (e.g. CUDA 10.1.243)
 
-2. Make sure CUDA is installed at the correct version (e.g. CUDA 9.2.88).
+GCC >=7.5, (e.g. GCC 8.4.0) for Linux
+OR MSVC 192x (e.g. MSVC 1928 for Visual Studio 2019 v16.9.2) for Windows
 
-3. Make sure GCC is installed at the correct version (e.g. GCC 7.3.0).
-   Note: If you turn on the preprocessor directive: `#define CPUONLY_SPARSE_HASHMAP`, then you must lower your GCC version to 7.3.0.
-   For CUDA versions higher than 10, GCC must be lowered to atmost 8.
-4. A Linux operating system is needed.
+*Note* for compilation on Windows, it is best if Cygwin uninstalled
+
+Note: If you turn on the preprocessor directive: `#define CPUONLY_SPARSE_HASHMAP`, then you must lower your GCC version to 7.3.0.
+   
+Here is a snippet of the table for CUDA/GCC compatibility:
+|   CUDA version   | max supported GCC version |
+|:----------------:|:-------------------------:|
+| 11.1, 11.2, 11.3 |             10            |
+|        11        |             9             |
+|    10.1, 10.2    |             8             |
+
+And the table for CUDA/MSVC compatibility:
+| CUDA version   | Compiler*         | IDE                     |
+|----------------|-------------------|-------------------------|
+| >=10.1, <=11.3 | MSVC Version 192x | Visual Studio 2019 16.x |
+
 
 Ripser++ is intended to run on high performance computing systems.
 
@@ -42,16 +59,16 @@ It is also preferable to have a multicore processor (e.g. >= 28 cores) for high 
 The purpose of the Python Bindings is to allow users to write their own Python scripts to run Ripser++. The user can write Python preprocessing code on the inputs of Ripser++. This can eliminate file I/O and allow for automated calling of Ripser++.
 
 Contributors:
-Birkan Gokbag,
 Ryan DeMilt,
+Birkan Gokbag,
 Simon Zhang
 
 Requirements:
 
-Linux,
-CMake,
-CUDA,
-gcc from Ripser++
+Linux, (or Windows)
+CMake >=3.10,
+CUDA >=10.1,
+GCC >=7.5
 
 Python 3.x,
 NumPy,
@@ -61,11 +78,19 @@ SciPy
 
 ## Installation
 
+For the latest release of ripser++:
+
+```
+pip3 install git+https://github.com/simonzhang00/ripser-plusplus.git
+```
+
+For the version on PyPI:
+
 ```
 pip3 install ripserplusplus
 ```
 
-or in the ripser-plusplus/ directory:
+or in the ripser-plusplus/ directory (local installation):
 
 ```
 git clone https://github.com/simonzhang00/ripser-plusplus.git
@@ -74,6 +99,9 @@ cd ripserplusplus
 ```
 
 Notice after local installation you need to go to a different directory than ripser-plusplus/ due to path searching in the ```__init__.py``` file.
+
+**Note** Compilation currently can take >=2 minutes on Windows due to a workaround and >=1 minute on Linux so be patient!
+**Note** You need all of the software and hardware requirements listed in the installation section.
 
 ## The ripserplusplus Python API
 
@@ -107,7 +135,7 @@ Options:
                      point-cloud    (point cloud in Euclidean space)
                      sparse         (sparse distance matrix in sparse triplet (COO) format)
   --dim <k>        compute persistent homology up to dimension <k>
-  --threshold <t>  compute Rips complexes up to diameter <t>
+  --thre   shold <t>  compute Rips complexes up to diameter <t>
   --sparse         force sparse computation
   --ratio <r>      only show persistence pairs with death/birth ratio > r
 ```
@@ -137,7 +165,8 @@ In your Python script, call ```run(arguments_list, matrix or file_name)``` with 
 
 Python bindings work with file name inputs similar to ripser++ executable. Examples are located under ripser-plusplus/python/working_directory/examples.py.
 
-e.g. ```rpp_py.run("--format point-cloud --sparse --dim 2 --threshold 1.4", "../../examples/o3_4096.point_cloud")```
+from the ripser-plusplus/ripserplusplus/ directory:
+e.g. ```rpp_py.run("--format point-cloud --sparse --dim 2 --threshold 1.4", "examples/o3_4096.point_cloud")```
 
 ### User Matrix Formats
 
@@ -164,7 +193,7 @@ runs Ripser++ on the same data as the distance matrix given above.
 * Supports a 2-d numpy array where the number of rows are the number of points embedded in d-dimensional euclidan space and the number of columns is d
 * Assumes the Euclidean distance between points
 
-e.g. ```rpp_py.run("--format point-cloud",np.array([3,2,1],[1,2,3]))```
+e.g. ```rpp_py.run("--format point-cloud",np.array([[3,2,1],[1,2,3]]))```
 
 runs Ripser++ on a 2 point point cloud in 3 dimensional Euclidean space.
 

@@ -8,6 +8,7 @@ import os
 import platform
 import pathlib
 import struct
+import shutil
 from setuptools import find_packages, setup, Extension
 from setuptools.command.build_ext import build_ext as build_ext_orig
 
@@ -28,7 +29,7 @@ class CMakeExtension(Extension):
         if struct.calcsize("P") * 8 != 64:
             raise Exception("Requires a 64 bit architecture")
         if(platform.system() != 'Linux'):
-            raise Exception("Requires Linux operating system")    
+            pass #raise Exception("Requires Linux operating system")
         
         super().__init__(name, sources=[])
         
@@ -62,8 +63,8 @@ class build_ext(build_ext_orig):
 
         # example of build args
         build_args = [
-            '--config', config,
-            '--', '-j4'
+            '--config', config
+            #'--', '-j4'
         ]
 
         os.chdir(str(build_temp))
@@ -73,6 +74,13 @@ class build_ext(build_ext_orig):
         # Troubleshooting: if fail on line above then delete all possible
         # temporary CMake files including "CMakeCache.txt" in top level dir.
         os.chdir(str(cwd))
+
+        if platform.system() == 'Windows':
+            dll_path1 = os.path.join(build_temp,'Release','phmap.dll')
+            dll_path2 = os.path.join(build_temp,'Release','pyripser++.dll')
+
+            shutil.copy(dll_path1,extdir.parent)
+            shutil.copy(dll_path2,extdir.parent)
 
 setup(
     name="ripserplusplus",
@@ -101,6 +109,7 @@ setup(
     classifiers=[
         "Programming Language :: Python",
         #"Operating System :: OS Independent",
-        "Topic :: System :: Operating System Kernels :: Linux",
+        "Operating System :: POSIX :: Linux",
+        "Operating System :: Microsoft :: Windows"
     ],
 )

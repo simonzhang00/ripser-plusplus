@@ -6,6 +6,7 @@ from .Ripser_plusplus_Converter import find
 import numpy as np
 import scipy.sparse as sps
 import os
+import platform
 import pathlib
 
 
@@ -99,11 +100,17 @@ def run(args, data = None):
     arguments[:] = params
     
     prog = None
+    prog2= None
     path2= str(pathlib.Path(__file__).with_name('libphmap.so'))
+    if platform.system() == 'Windows':
+        path2= str(pathlib.Path(__file__).with_name('phmap.dll'))
     if None!=path2:
         prog2= ctypes.cdll.LoadLibrary(path2)
     else:
-        raise Exception("Could not locate libphmap.so file, please check README.md for details.")
+        if platform.system() == "Windows":
+            raise Exception("Could not locate libphmap.dll file, please check README.md for details.")
+        else:
+            raise Exception("Could not locate libphmap.so file, please check README.md for details.")
 
     # Check whether environment variable is set (deprecated)
     #if "PYRIPSER_PP_BIN" in os.environ:
@@ -111,10 +118,16 @@ def run(args, data = None):
     #else:
         #path= find("libpyripser++.so",".")#check the current directory and everything below it
     path= str(pathlib.Path(__file__).with_name('libpyripser++.so'))
+    if platform.system() == 'Windows':
+        path = str(pathlib.Path(__file__).with_name('pyripser++.dll'))
     if None != path:
-          prog = ctypes.cdll.LoadLibrary(path)
+        prog = ctypes.cdll.LoadLibrary(path)
     else:
-        raise Exception("Could not locate libpyripser++.so file, please check README.md for details.")
+        if platform.system() == "Windows":
+            raise Exception("Could not locate pyripser++.dll file, please check README.md for details.")
+        else:
+            raise Exception("Could not locate pyripser++.so file, please check README.md for details.")
+
             ##path= find("libpyripser++.so","..")#check the parent directory and everything below it
             ##if None != path:
             ##    prog = ctypes.cdll.LoadLibrary(path)

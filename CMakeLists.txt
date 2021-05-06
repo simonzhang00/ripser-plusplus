@@ -7,8 +7,15 @@ find_package(CUDA 7 REQUIRED)
 set(CMAKE_BUILD_TYPE "Release")
 
 INCLUDE(CheckCXXSourceCompiles)
+include(GenerateExportHeader)
 
 include_directories(ripserplusplus/include)
+
+#If building on windows
+if(MSVC)
+    set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS TRUE)
+    set(BUILD_SHARED_LIBS TRUE)
+endif()
 
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 
@@ -62,17 +69,27 @@ endif()
 set(CMAKE_CXX_STANDARD 11)
 
 #add_library(phmap SHARED ./ripserplusplus/include/phmap_interface/phmap_interface.cpp)
-add_library(phmap SHARED ./ripserplusplus/include/phmap_interface/phmap_interface.cpp)
+add_library(phmap SHARED ./ripserplusplus/include/phmap_interface/phmap_interface.cpp )
+if(MSVC)
+    generate_export_header(phmap)
+endif()
 
 #add_executable(ripser ../ripser.cpp)
 
 cuda_add_library(pyripser++ SHARED ./ripserplusplus/ripser++.cu)
+if(MSVC)
+    generate_export_header(pyripser++)
+endif()
+
 #target_compile_definitions(pyripser++ PUBLIC ASSEMBLE_REDUCTION_SUBMATRIX)
 #target_compile_definitions(pyripser++ PUBLIC INDICATE_PROGRESS)
 #target_compile_definitions(pyripser++ PUBLIC CPUONLY_SPARSE_HASHMAP)#GCC version MUST be <=7.3 (tested on version 7.3)
 #target_compile_definitions(pyripser++ PUBLIC CPUONLY_ASSEMBLE_REDUCTION_MATRIX)
 
-target_link_libraries(pyripser++ phmap)
+target_link_libraries(pyripser++ phmap ${CMAKE_CUDA_IMPLICIT_LINK_DIRECTORIES})
+if(MSVC)
+    generate_export_header(pyripser++)
+endif()
 
 #cuda_add_executable(ripser++ ../ripser++.cu)
 #target_compile_definitions(ripser++ PUBLIC ASSEMBLE_REDUCTION_SUBMATRIX)

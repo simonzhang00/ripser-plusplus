@@ -2,7 +2,9 @@ build/
 ripserplusplus/build/
 vscode/
 cmake-build-debug/
+cmake-build-release/
 ripserplusplus/cmake-build-debug/
 dist/
 .vscode/
 *.egg-info
+out/
