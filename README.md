@@ -5,6 +5,8 @@
 
 Copyright © 2019, 2020, 2021 Simon Zhang, Mengbai Xiao, Hao Wang
 
+Maintainer: Simon Zhang
+
 Contributors:
 (by order of introduction to the project)
 [Birkan Gokbag](https://github.com/BirkanGokbag), [Ryan DeMilt](https://github.com/ryanpdemilt)
@@ -145,7 +147,7 @@ Options:
                      point-cloud    (point cloud in Euclidean space)
                      sparse         (sparse distance matrix in sparse triplet (COO) format)
   --dim <k>        compute persistent homology up to dimension <k>
-  --thre   shold <t>  compute Rips complexes up to diameter <t>
+  --threshold <t>  compute Rips complexes up to diameter <t>
   --sparse         force sparse computation
   --ratio <r>      only show persistence pairs with death/birth ratio > r
 ```
@@ -222,7 +224,7 @@ for usage, see the file ripserplusplus/python_examples.py
 
 ## How do the Python Bindings Work?
 
-setup.py will build shared object files with CMake: lipyripser++.so and libphmap.so from ripser++.cu. lipyripser++.so is loaded through the ctypes foreign function library of Python. Ripser++ is accessed with the API of one function called ```run(-,-)``` to be called by your own custom Python script.
+setup.py will build shared object files with CMake: libpyripser++.so and libphmap.so from ripser++.cu. libpyripser++.so is loaded through the ctypes foreign function library of Python. Ripser++ is accessed with the API of one function called ```run(-,-)``` to be called by your own custom Python script.
 
 ## Raw Installation From Source
 

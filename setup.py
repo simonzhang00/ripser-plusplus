@@ -84,8 +84,8 @@ class build_ext(build_ext_orig):
 
 setup(
     name="ripserplusplus",
-    version="1.0.9",
-    author="Simon Zhang - Ripser++, Birkan Gokbag, Ryan DeMilt, Simon Zhang - Python Binding",
+    version="1.1.1",
+    author="Simon Zhang - Ripser++, Ryan DeMilt, Birkan Gokbag, Simon Zhang - Python Binding",
     author_email="szhang31415@gmail.com, demilt.ryan@gmail.com, birkan.gokbag@gmail.com ",
     description="Python binding for Ripser++.",
     long_description=README,
@@ -104,8 +104,8 @@ setup(
     install_requires=DEPENDENCIES,
     # license and classifier list:
     # https://pypi.org/pypi?%3Aaction=list_classifiers
-    #license="License :: OSI Approved :: MIT License",
-    license=read_text("LICENSE"),
+    license="License :: OSI Approved :: MIT License",
+    #license=read_text("LICENSE"),
     classifiers=[
         "Programming Language :: Python",
         #"Operating System :: OS Independent",
