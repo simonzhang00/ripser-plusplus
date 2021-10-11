@@ -64,7 +64,7 @@ set(CMAKE_CXX_STANDARD 11)
 
 add_library(phmap STATIC include/phmap_interface/phmap_interface.cpp)
 
-add_executable(ripser ripser.cpp)
+add_executable(ripser ripserJan2020/ripser.cpp)
 cuda_add_executable(ripser++ ripser++.cu)
 #target_compile_definitions(ripser++ PUBLIC ASSEMBLE_REDUCTION_SUBMATRIX)
 #target_compile_definitions(ripser++ PUBLIC INDICATE_PROGRESS)

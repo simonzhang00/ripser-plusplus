@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# this is an experiment measuring the performance improvement of Ripser++ over Ripser
+# this is an experiment measuring the performance improvement of Ripser++ over Ripser to reproduce the experiments in the paper
 
 # current directory should be the ripser-plusplus/build folder
 # please source this shell script in the ripser-plusplus/build folder AFTER running 'source install_simple.sh' in the ripser-plusplus folder
@@ -52,5 +52,5 @@ then
     /usr/bin/time -v ./ripser --dim 3 ../examples/Vicsek300_300_of_300.distance_matrix 1> run_results/Vicsek300_300_of_300.cpu.barcodes
 
 else
-    echo "please run the command 'source install.sh' to build ripser and ripser++ in the build folder before running the command 'source run.sh' in the build folder"
+    echo "please build ripser and ripser++ and place them into this folder before running the command 'source run.sh'"
 fi

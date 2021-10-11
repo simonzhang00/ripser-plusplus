@@ -13,11 +13,20 @@ Contributors:
 
 Ripser++ `[3]` is built on top of the Ripser `[1]` software written by Ulrich Bauer and utilizes both GPU and CPU (via separation of parallelisms `[4]`) to accelerate the computation of Vietoris-Rips persistence barcodes.
 
+
 ## Description
 
 Ripser++ utilizes the massive parallelism hidden in the computation of Vietoris-Rips persistence barcodes by taking mathematical and algorithmic oppurtunities we have identified. It can achieve up to 30x speedup over the total execution time of Ripser, up to 2.0x CPU memory efficiency and and up to 1.58x reduction in the amount of memory used on GPU compared to that on CPU for Ripser.
 
 After dimension 0 persistence computation, there are two stages of computation in the original Ripser: filtration construction with clearing followed by matrix reduction. Ripser++ massively parallelizes the filtration construction with clearing stage and extracts the hidden parallelism of finding "apparent pairs" from matrix reduction all on GPU, leaving the computation of submatrix reduction on the remaining nonapparent columns on CPU. By our empirical findings, up to 99.9% of the columns in a cleared coboundary matrix are apparent.
+
+
+### The Impact of Ripser++
+Since the release of Ripser++ in Dec 2019 , the apparent pair search has been reimplemented on CPU directly from our algorithm for:
+
+* An updated [Ripser](https://github.com/Ripser/ripser/tree/b330e04e4995120aa179bedd033bf2df85bd47f3), with the reimplementation written [here](https://github.com/Ripser/ripser/blob/b330e04e4995120aa179bedd033bf2df85bd47f3/ripser.cpp#L540)
+* [giotto-ph](https://github.com/giotto-ai/giotto-ph/tree/1d0c628fe5e5c5c4f712bbc1fb9ddc3acc347f9d), a multicore implementation of Ripser, with the reimplementation written [here](https://github.com/giotto-ai/giotto-ph/blob/1d0c628fe5e5c5c4f712bbc1fb9ddc3acc347f9d/gph/src/ripser.h#L766)
+
 
 ## Installation Requirements
 
@@ -285,7 +294,7 @@ To see the performance of Ripser++ on a single data set, type the command:
 With a Tesla V100 GPU with 32 GB device memory, this should take just a few seconds (e.g. ~2 to 3 seconds).
 
 ### optional benchmarking
-While in the build directory, to compare the performance of Ripser++ with the August 2019 version of [Ripser](https://github.com/Ripser/ripser) and run all 6 datasets provided in the examples directory, type:
+While in the build directory, to compare the performance of Ripser++ with the January 2020 version of [Ripser](https://github.com/Ripser/ripser/tree/286d3696796a707eecd0f71e6377880f60c936da), as done in our paper and run all 6 datasets provided in the examples directory, type:
 
 ```
 source run.sh
@@ -375,7 +384,7 @@ ripser-plusplus/
       |─ CMakeLists.txt            - CMakeLists for building ripser++ command line executable and command line test suite
       |─ install_simple.sh         - use this to build ripser++ for commandline
       |─ ripser++.cu               - the source code
-      |─ ripser.cpp                - source code of Ulrich Bauer's original ripser  
+      |─ ripserJan2020             - source code of Ulrich Bauer's original ripser as of Jan 2020 (for reproducibility of our paper's experiments) 
       └─ Ripser_plusplus_Converter - converts python input to ctypes for processing by ripser++
 ```
 
@@ -383,11 +392,12 @@ ripser-plusplus/
 ## Citing:
 
 ```
-@misc{2003.07989,
-Author = {Simon Zhang, Mengbai Xiao, and Hao Wang},
-Title = {GPU-Accelerated Computation of Vietoris-Rips Persistence Barcodes},
-Year = {2020},
-Eprint = {arXiv:2003.07989},
+@inproceedings{zhang2020gpu,
+  title={GPU-Accelerated Computation of Vietoris-Rips Persistence Barcodes},
+  author={Zhang, Simon and Xiao, Mengbai and Wang, Hao},
+  booktitle={36th International Symposium on Computational Geometry (SoCG 2020)},
+  year={2020},
+  organization={Schloss Dagstuhl-Leibniz-Zentrum f{\"u}r Informatik}
 }
 ```
 
