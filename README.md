@@ -21,12 +21,11 @@ Ripser++ utilizes the massive parallelism hidden in the computation of Vietoris-
 After dimension 0 persistence computation, there are two stages of computation in the original Ripser: filtration construction with clearing followed by matrix reduction. Ripser++ massively parallelizes the filtration construction with clearing stage and extracts the hidden parallelism of finding "apparent pairs" from matrix reduction all on GPU, leaving the computation of submatrix reduction on the remaining nonapparent columns on CPU. By our empirical findings, up to 99.9% of the columns in a cleared coboundary matrix are apparent.
 
 
-### The Impact of Ripser++
+### The Usage of Ripser++ in Other Software Packages
 Since the release of Ripser++ in Dec 2019 , the apparent pair search has been reimplemented on CPU directly from our algorithm for:
 
 * An updated [Ripser](https://github.com/Ripser/ripser/tree/b330e04e4995120aa179bedd033bf2df85bd47f3), with the reimplementation written [here](https://github.com/Ripser/ripser/blob/b330e04e4995120aa179bedd033bf2df85bd47f3/ripser.cpp#L540)
 * [giotto-ph](https://github.com/giotto-ai/giotto-ph/tree/1d0c628fe5e5c5c4f712bbc1fb9ddc3acc347f9d), a multicore implementation of Ripser, with the reimplementation written [here](https://github.com/giotto-ai/giotto-ph/blob/1d0c628fe5e5c5c4f712bbc1fb9ddc3acc347f9d/gph/src/ripser.h#L766)
-
 
 ## Installation Requirements
 
