@@ -88,6 +88,7 @@
 #include <thrust/scan.h>
 #include <thrust/execution_policy.h>
 #include <thrust/unique.h>
+#include <thrust/sort.h>
 #include <cuda_runtime.h>
 #ifdef CPUONLY_SPARSE_HASHMAP
 #include <sparsehash/sparse_hash_map>
